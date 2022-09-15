@@ -1,0 +1,8 @@
+@misc{shafiullah2022behavior,
+      title={Behavior Transformers: Cloning $k$ modes with one stone}, 
+      author={Nur Muhammad Shafiullah and Zichen Jeff Cui and Ariuntuya Altanzaya and Lerrel Pinto},
+      year={2022},
+      eprint={2206.11251},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}

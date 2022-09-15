@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js">
+</script>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:description" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta name="twitter:description"
+    content="Behavior Transformer (BeT), a new technique to model unlabeled demonstration data with multiple modes.">
+  <meta name="twitter:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
+  <meta name="twitter:creator" content="@notmahi" />
+  <link rel="shortcut icon" href="img/favicon.png">
+  <link rel="stylesheet" href="css/simple-grid.css">
+  <title>Behavior Transformers: Cloning k modes with one stone</title>
+  <script>
+    function retime(duration, class_name) {
+      var videos = document.getElementsByClassName(class_name);
+      for (var i = 0; i < videos.length; i++) {
+        var video = videos[i];
+        video.onloadeddata = function () {
+          this.playbackRate = this.duration / duration;
+        };
+      }
+    }
+
+    function monitor(replay_name) {
+      var div = document.getElementById(replay_name);
+      div.style.opacity = 1.0;
+    }
+
+    function replay(class_name, replay_name) {
+      var video = document.getElementById(class_name);
+      video.currentTime = 0;
+      video.play();
+      var div = document.getElementById(replay_name);
+      div.style.opacity = 0.0;
+    }
+  </script>
+  <style>
+    .replay {
+      font-size: 1.5em;
+      color: #00A2FF;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="jumbotron">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center">
+          <h1>Behavior Transformers: <br />Cloning <math display="inline">
+              <mi>k</mi>
+            </math> modes with one stone</h1>
+        </div>
+        <div class="col-2 hidden-sm"></div>
+        <div class="col-2 center">
+          <a style="text-decoration: none" href="https://arxiv.org/abs/2206.11251">
+            <h3 style="color: #F5A803">Paper</h3>
+          </a>
+        </div>
+        <div class="col-2 center">
+          <a style="text-decoration: none" href="https://github.com/notmahi/bet">
+            <h3 style="color: #F5A803">Code</h3>
+          </a>
+        </div>
+        <div class="col-2 center">
+          <a style="text-decoration: none" href="https://osf.io/983qz/">
+            <h3 style="color: #F5A803">Data</h3>
+          </a>
+        </div>
+        <div class="col-2 center">
+          <a style="text-decoration: none" href="more/bibtex.txt">
+            <h3 style="color: #F5A803">Bibtex</h3>
+          </a>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3 center">
+          <p><a href="https://mahis.life">Nur Muhammad (Mahi) Shafiullah</a></p>
+        </div>
+        <div class="col-3 center">
+          <p><a href="https://jeffcui.com/">Zichen Jeff Cui</a></p>
+        </div>
+        <div class="col-3 center">
+          <p><a href="https://artys.page">Ariuntaya Altanzaya</a></p>
+        </div>
+        <div class="col-3 center">
+          <p><a href="https://lerrelpinto.com">Lerrel Pinto</a></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 center">
+          <h3>New York University</h3>
+        </div>
+      </div>
+      <div class="col-12 center img">
+        <h4><a style="color: #00A2FF; font-weight: bold;">Behavior Transformers (BeT)</a> is a new method for learning
+          behaviors from rich, distributionally multi-modal data.</h4>
+        <video style="width: 100%" muted autoplay loop>
+          <source src="./mfiles/behavior_transformers.mp4" type="video/mp4">
+        </video>
+      </div>
+      <!--Abstract-->
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center m-bottom" id="abstract_tag">Abstract <span id="hide_logo">↓</span></h2>
+          <p id="abstract_text">
+            While behavior learning has made impressive progress in recent times, it lags behind computer vision and
+            natural language processing due to its inability to leverage large, human generated datasets.
+            Human behavior has a wide variance, multiple modes, and human demonstrations naturally don't come with
+            reward labels.
+            These properties limit the applicability of current methods in Offline RL and Behavioral Cloning to learn
+            from large, pre-collected datasets.
+            In this work, we present Behavior Transformer (BeT), a new technique to model unlabeled demonstration data
+            with multiple modes.
+            BeT retrofits standard transformer architectures with action discretization coupled with a multi-task
+            action correction inspired by offset prediction in object detection.
+            This allows us to leverage the multi-modal modeling ability of modern transformers to predict multi-modal
+            continuous actions.
+            We experimentally evaluate BeT on a variety of robotic manipulation and self-driving behavior datasets.
+            We show that BeT significantly improves over prior state-of-the-art work on solving demonstrated tasks while
+            capturing the major modes present in the pre-collected datasets.
+            Finally, through an extensive ablation study we further analyze the importance of every crucial component in
+            BeT.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--Videos-->
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center">Unconditional Rollouts of BeT</h2>
+          <p>Here, we show unconditional rollouts from BeT models trained from multi-modal demonstartions on the CARLA,
+            Block push, and Franka Kitchen environments.
+            Due to the multi-modal architecture of BeT, even in the same environment successive rollouts can achieve
+            different goals, or the same goals in different ways.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="body-content">
+      <div class="container">
+        <div class="grid-display">
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/pushblock/1.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid playsinline" style="height: 600" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/pushblock/2.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-12 right">
+              <span>
+                <a class="replay" href="more/blockpush" target="_blank">More</a>
+              </span>
+            </div>
+          </div>
+          <br><br>
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/kitchen/1.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6 center">
+              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/kitchen/2.mp4" type="video/mp4">
+              </video>
+            </div>
+
+            <div class="col-12 right">
+              <span>
+                <a class="replay" href="more/kitchen" target="_blank">More</a>
+              </span>
+            </div>
+          </div>
+          <br><br>
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/carla/1_over.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/carla/2_over.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+          <div class="row">
+
+            <div class="col-6 left">
+              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/carla/1_obs.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6 left">
+              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
+                <source src="./mfiles/env/carla/2_obs.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--Image-->
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center m-bottom">Method</h2>
+          <p>BeT is based of three key insights.
+          <ul style="font-size: 1.125rem;font-weight: 200;line-height: 1.8">
+            <li>First, we leverage the context
+              based multi-token prediction ability of transformer-based sequence models to predict multi-modal
+              actions.
+            </li>
+            <li>Second, since transformer-based sequence models are naturally suited to predicting
+              discrete classes, we cluster continuous actions into discrete bins using k-means. This allows us
+              to model high-dimensional, continuous multi-modal action distributions as categorical distributions
+              without learning complicated generative models.</li>
+            <li>Third, to ensure that the actions sampled
+              from BeT are useful for online rollouts, we concurrently learn a residual action corrector to
+              produce
+              continuous actions for a specific sampled action bin.</li>
+          </ul>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center img">
+          <video style="width: 100%" id="desc_1" onended="monitor('replay_1')" playsinline muted autoplay>
+            <source src="./mfiles/1.mp4" type="video/mp4">
+          </video>
+          <span class="replay" id="replay_1" onclick="replay('desc_1', 'replay_1')">replay</span>
+          <p>
+            We use a k-means based clustering to cluster continuous actions into discrete bins.
+            The bin centers, learned from the offline data, are used to convert each continous actions into a discrete
+            and a continuous component.
+            These components can be recombined into a full, continous action at any time.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center img">
+          <video style="width: 100%" id="desc_2" onended="monitor('replay_2')" playsinline muted autoplay>
+            <source src="./mfiles/2.mp4" type="video/mp4">
+          </video>
+          <span class="replay" id="replay_2" onclick="replay('desc_2', 'replay_2')">replay</span>
+          <p>
+            Our MinGPT model learns to predict a categorical distribution over the bins, as well as a residual
+            continous component of an actions given bins.
+            We train the bin predictor part using a negative-log likelihood based <a
+              href="https://paperswithcode.com/method/focal-loss">Focal loss</a>, and the residual action predictor part
+            using a <a
+              href="https://lilianweng.github.io/posts/2017-12-31-object-recognition-part-3/#loss-function">multi-task
+              loss</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center img">
+          <video style="width: 100%" id="desc_3" onended="monitor('replay_3')" playsinline muted autoplay>
+            <source src="./mfiles/3.mp4" type="video/mp4">
+          </video>
+          <span class="replay" id="replay_3" onclick="replay('desc_3', 'replay_3')">replay</span>
+          <p>
+            During test, our model predicts a bin, and then uses the bin center and the associated residual continous
+            action to reconstruct a full continous action to execute in the environment.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!--Experiments-->
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center m-bottom">Experiments</h2>
+          <p>Performance of BeT compared with different baselines in learning from demonstrations. For CARLA, we
+            measure
+            the
+            probability of the car reaching the goal successfully. For Block push, we measure the probability of
+            reaching one and
+            two blocks, and the probabilities of pushing one and two blocks to respective squares. For Kitchen, we
+            measure the
+            probability of <math display="inline">
+              <mi>n</mi>
+            </math> tasks being completed by the model within the allotted 280 times. Evaluations are over 100
+            rollouts
+            in CARLA and 1,000 rollouts in Block push and Kitchen environments.
+          </p>
+          <img class="center" src="./mfiles/Exp Table.001.png" style="width:100%"></img>
+          <p>Distribution of most frequent tasks completed in sequence in the Kitchen environment. Each task is
+            colored
+            differently,
+            and frequency is shown out of a 1,000 unconditional rollouts from the models.
+          </p>
+          <br><br>
+          <img class="center" src="./mfiles/multimodal_colorbar_flipped-1.png" style="width:100%"></img>
+        </div>
+      </div>
+    </div>
+
+    <!--Future Work-->
+    <div class="container" style="padding-bottom: 150px; padding-top: 20px">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center m-bottom">Future Work</h2>
+          <p>In this work, we introduce Behavior Transformers (BeT), which uses a transformer-decoder based
+            backbone with a discrete action mode predictor coupled with a continuous action offset corrector
+            to model continuous actions sequences from open-ended, multi-modal demonstrations. While
+            BeT shows promise, the truly exciting use of it would be to learn diverse behavior from human
+            demonstrations or interactions in the real world. In parallel, extracting a particular, unimodal
+            behavior
+            policy from BeT during online interactions, either by distilling the model or by generating the right
+            "prompts", would make BeT tremendously useful as a prior for online Reinforcement Learning.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <footer>
+  </footer>
+</body>
+<script>
+  var abstract_tag = document.querySelector("#abstract_tag");
+  var abstract_text = document.querySelector("#abstract_text");
+  var hide_logo = document.querySelector("#hide_logo");
+  abstract_text.style.display = "none";
+  abstract_tag.addEventListener("click", function () {
+    abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
+    hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
+  });
+  retime(15, "demovid");
+
+  var ids = ["replay_1", "replay_2", "replay_3"];
+  for (id in ids) {
+    console.log(ids[id]);
+    document.getElementById(ids[id]).style.opacity = 0;
+    document.getElementById(ids[id]).style.cursor = "pointer";
+  }
+
+</script>
+
+</html>
