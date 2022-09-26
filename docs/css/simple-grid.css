@@ -306,3 +306,43 @@ p {
     max-width: 60rem;
   }
 }
+
+.seek_button {
+  background-color: #FFF;
+  border-top: #FFF;
+  border-width: 1px;
+  border-bottom-style: dashed;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 4px 0px;
+  cursor: pointer;
+}
+
+/* Fallback stuff */
+progress[value] {
+  appearance: none;
+  /* Needed for Safari */
+  border: none;
+  /* Needed for Firefox */
+  color: #dd00ff;
+  width: 100%;
+  /* Fallback to a solid color */
+}
+
+/* WebKit styles */
+progress[value]::-webkit-progress-value {
+  background-image: linear-gradient(to right,
+      #dd00ff, #00A2FF);
+  transition: width;
+  transition-timing-function: ease;
+  transition-duration: 500ms;
+  width: 100%;
+}
+
+/* Firefox styles */
+progress[value]::-moz-progress-bar {
+  background-image: -moz-linear-gradient(right,
+      #dd00ff, #00A2FF);
+  width: 100%;
+}
