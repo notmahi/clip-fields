@@ -6,20 +6,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:title" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
   <meta property="og:description" content="Behavior Transformers: Cloning k modes with one stone">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:site_name" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
   <meta property="og:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta name="twitter:title" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
   <meta name="twitter:description"
     content="Behavior Transformer (BeT), a new technique to model unlabeled demonstration data with multiple modes.">
   <meta name="twitter:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
   <meta name="twitter:creator" content="@notmahi" />
   <link rel="shortcut icon" href="img/favicon.png">
   <link rel="stylesheet" href="css/simple-grid.css">
-  <title>CLIP-Fields</title>
+  <title>CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</title>
   <script>
     function retime(duration, class_name) {
       var videos = document.getElementsByClassName(class_name);
@@ -342,20 +342,12 @@
   var abstract_tag = document.querySelector("#abstract_tag");
   var abstract_text = document.querySelector("#abstract_text");
   var hide_logo = document.querySelector("#hide_logo");
-  // abstract_text.style.display = "none";
+
   abstract_tag.addEventListener("click", function () {
     abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
     hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
   });
-  // retime(15, "demovid");
 
-  var ids = ["replay_1", "replay_2", "replay_3"];
-  for (id in ids) {
-    // console.log(ids[id]);
-    document.getElementById(ids[id]).style.opacity = 0;
-    document.getElementById(ids[id]).style.curso
-    r = "pointer";
-  }
   progressLoop("nyu_robot_run", "progress_nyu");
   progressLoop("pit_robot_run", "progress_pit");
 
