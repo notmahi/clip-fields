@@ -19,68 +19,71 @@
   <meta name="twitter:creator" content="@notmahi" />
   <link rel="shortcut icon" href="img/favicon.png">
   <link rel="stylesheet" href="css/simple-grid.css">
-  <title>CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</title>
-  <script>
-    function retime(duration, class_name) {
-      var videos = document.getElementsByClassName(class_name);
-      for (var i = 0; i < videos.length; i++) {
-        var video = videos[i];
-        video.onloadeddata = function () {
-          this.playbackRate = this.duration / duration;
-        };
-      }
-    }
-
-    function monitor(replay_name) {
-      var div = document.getElementById(replay_name);
-      div.style.opacity = 1.0;
-    }
-
-    function replay(class_name, replay_name) {
-      var video = document.getElementById(class_name);
-      video.currentTime = 0;
-      video.play();
-      var div = document.getElementById(replay_name);
-      div.style.opacity = 0.0;
-    }
-
-    function seek(class_id, progress_id, time, endtime) {
-      var video = document.getElementById(class_id);
-      var progress = document.getElementById(progress_id);
-      video.currentTime = time;
-      video.supposedEndTime = endtime;
-      video.supposedStartTime = time;
-      progress.style.transitionDuration = "0s";
-      progress.value = Math.round((video.currentTime / video.duration) * 100);
-      progress.style.transitionDuration = "0.5s";
-      video.addEventListener("timeupdate", function (event) {
-        target = event.target;
-        if (target.currentTime >= target.supposedEndTime) {
-          target.currentTime = target.supposedStartTime; // change time index here
+  <<<<<<< HEAD <title>CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</title>
+    =======
+    <title>CLIP-Fields</title>
+    >>>>>>> ee4b559c9f924819dc5d5bb26dc45f15f57a1744
+    <script>
+      function retime(duration, class_name) {
+        var videos = document.getElementsByClassName(class_name);
+        for (var i = 0; i < videos.length; i++) {
+          var video = videos[i];
+          video.onloadeddata = function () {
+            this.playbackRate = this.duration / duration;
+          };
         }
-      }, false);
-    }
-
-    function progressLoop(video_class_id, progress_id) {
-      var video = document.getElementById(video_class_id);
-      var progress = document.getElementById(progress_id);
-      console.log(video.currentTime / video.duration);
-      function innerLoop() {
-        if (video !== null && (video.currentTime / video.duration)) {
-          progress.value = Math.round((video.currentTime / video.duration) * 100);
-        }
-        window.requestAnimationFrame(innerLoop);
       }
-      innerLoop();
-    }
-  </script>
-  <style>
-    .replay {
-      font-size: 1.5em;
-      color: #00A2FF;
-      text-decoration: none;
-    }
-  </style>
+
+      function monitor(replay_name) {
+        var div = document.getElementById(replay_name);
+        div.style.opacity = 1.0;
+      }
+
+      function replay(class_name, replay_name) {
+        var video = document.getElementById(class_name);
+        video.currentTime = 0;
+        video.play();
+        var div = document.getElementById(replay_name);
+        div.style.opacity = 0.0;
+      }
+
+      function seek(class_id, progress_id, time, endtime) {
+        var video = document.getElementById(class_id);
+        var progress = document.getElementById(progress_id);
+        video.currentTime = time;
+        video.supposedEndTime = endtime;
+        video.supposedStartTime = time;
+        progress.style.transitionDuration = "0s";
+        progress.value = Math.round((video.currentTime / video.duration) * 100);
+        progress.style.transitionDuration = "0.5s";
+        video.addEventListener("timeupdate", function (event) {
+          target = event.target;
+          if (target.currentTime >= target.supposedEndTime) {
+            target.currentTime = target.supposedStartTime; // change time index here
+          }
+        }, false);
+      }
+
+      function progressLoop(video_class_id, progress_id) {
+        var video = document.getElementById(video_class_id);
+        var progress = document.getElementById(progress_id);
+        console.log(video.currentTime / video.duration);
+        function innerLoop() {
+          if (video !== null && (video.currentTime / video.duration)) {
+            progress.value = Math.round((video.currentTime / video.duration) * 100);
+          }
+          window.requestAnimationFrame(innerLoop);
+        }
+        innerLoop();
+      }
+    </script>
+    <style>
+      .replay {
+        font-size: 1.5em;
+        color: #00A2FF;
+        text-decoration: none;
+      }
+    </style>
 </head>
 
 <body>
@@ -342,12 +345,10 @@
   var abstract_tag = document.querySelector("#abstract_tag");
   var abstract_text = document.querySelector("#abstract_text");
   var hide_logo = document.querySelector("#hide_logo");
-
   abstract_tag.addEventListener("click", function () {
     abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
     hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
   });
-
   progressLoop("nyu_robot_run", "progress_nyu");
   progressLoop("pit_robot_run", "progress_pit");
 
