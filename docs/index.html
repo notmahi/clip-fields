@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js">
+<!-- <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"> -->
 </script>
 <html>
 
@@ -20,7 +20,7 @@
   <meta name="twitter:creator" content="@notmahi" />
   <link rel="shortcut icon" href="img/favicon.png">
   <link rel="stylesheet" href="css/simple-grid.css">
-  <title>Behavior Transformers: Cloning k modes with one stone</title>
+  <title>CLIP-Fields</title>
   <script>
     function retime(duration, class_name) {
       var videos = document.getElementsByClassName(class_name);
@@ -44,6 +44,36 @@
       var div = document.getElementById(replay_name);
       div.style.opacity = 0.0;
     }
+
+    function seek(class_id, progress_id, time, endtime) {
+      var video = document.getElementById(class_id);
+      var progress = document.getElementById(progress_id);
+      video.currentTime = time;
+      video.supposedEndTime = endtime;
+      video.supposedStartTime = time;
+      progress.style.transitionDuration = "0s";
+      progress.value = Math.round((video.currentTime / video.duration) * 100);
+      progress.style.transitionDuration = "0.5s";
+      video.addEventListener("timeupdate", function (event) {
+        target = event.target;
+        if (target.currentTime >= target.supposedEndTime) {
+          target.currentTime = target.supposedStartTime; // change time index here
+        }
+      }, false);
+    }
+
+    function progressLoop(video_class_id, progress_id) {
+      var video = document.getElementById(video_class_id);
+      var progress = document.getElementById(progress_id);
+      console.log(video.currentTime / video.duration);
+      function innerLoop() {
+        if (video !== null && (video.currentTime / video.duration)) {
+          progress.value = Math.round((video.currentTime / video.duration) * 100);
+        }
+        window.requestAnimationFrame(innerLoop);
+      }
+      innerLoop();
+    }
   </script>
   <style>
     .replay {
@@ -59,80 +89,75 @@
     <div class="container">
       <div class="row">
         <div class="col-12 center">
-          <h1>Behavior Transformers: <br />Cloning <math display="inline">
-              <mi>k</mi>
-            </math> modes with one stone</h1>
+          <h1>CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</h1>
         </div>
         <div class="col-2 hidden-sm"></div>
         <div class="col-2 center">
           <a style="text-decoration: none" href="https://arxiv.org/abs/2206.11251">
-            <h3 style="color: #F5A803">Paper</h3>
+            <h3 style="color: #dd00ff">Paper</h3>
           </a>
         </div>
         <div class="col-2 center">
           <a style="text-decoration: none" href="https://github.com/notmahi/bet">
-            <h3 style="color: #F5A803">Code</h3>
+            <h3 style="color: #dd00ff">Code</h3>
           </a>
         </div>
         <div class="col-2 center">
           <a style="text-decoration: none" href="https://osf.io/983qz/">
-            <h3 style="color: #F5A803">Data</h3>
+            <h3 style="color: #dd00ff">Data</h3>
           </a>
         </div>
         <div class="col-2 center">
           <a style="text-decoration: none" href="more/bibtex.txt">
-            <h3 style="color: #F5A803">Bibtex</h3>
+            <h3 style="color: #dd00ff">Bibtex</h3>
           </a>
         </div>
       </div>
       <div class="row">
-        <div class="col-3 center">
-          <p><a href="https://mahis.life">Nur Muhammad (Mahi) Shafiullah</a></p>
+        <div class="col-4 center">
+          <p><a href="https://mahis.life">Mahi Shafiullah<sup>1</sup></a></p>
         </div>
-        <div class="col-3 center">
-          <p><a href="https://jeffcui.com/">Zichen Jeff Cui</a></p>
+        <div class="col-4 center">
+          <p><a href="https://cpaxton.github.io/">Chris Paxton<sup>2</sup></a></p>
         </div>
-        <div class="col-3 center">
-          <p><a href="https://artys.page">Ariuntaya Altanzaya</a></p>
+        <div class="col-4 center">
+          <p><a href="https://lerrelpinto.com">Lerrel Pinto<sup>1</sup></a></p>
         </div>
-        <div class="col-3 center">
-          <p><a href="https://lerrelpinto.com">Lerrel Pinto</a></p>
+        <div class="col-2 center">
+          <p></p>
         </div>
+        <div class="col-4 center">
+          <p><a href="https://soumith.ch/">Soumith Chintala<sup>2</sup></a></p>
+        </div>
+        <div class="col-4 center">
+          <p><a href="#">Arthur Szlam<sup>2</sup></a></p>
+        </div>
+
       </div>
       <div class="row">
-        <div class="col-12 center">
-          <h3>New York University</h3>
+        <div class="col-6 center">
+          <h3>1: New York University</h3>
+        </div>
+        <div class="col-6 center">
+          <h3>2: Meta AI</h3>
         </div>
       </div>
-      <div class="col-12 center img">
-        <h4><a style="color: #00A2FF; font-weight: bold;">Behavior Transformers (BeT)</a> is a new method for learning
-          behaviors from rich, distributionally multi-modal data.</h4>
-        <video style="width: 100%" muted autoplay loop>
-          <source src="./mfiles/behavior_transformers.mp4" type="video/mp4">
-        </video>
-      </div>
+
       <!--Abstract-->
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom" id="abstract_tag">Abstract <span id="hide_logo">↓</span></h2>
           <p id="abstract_text">
-            While behavior learning has made impressive progress in recent times, it lags behind computer vision and
-            natural language processing due to its inability to leverage large, human generated datasets.
-            Human behavior has a wide variance, multiple modes, and human demonstrations naturally don't come with
-            reward labels.
-            These properties limit the applicability of current methods in Offline RL and Behavioral Cloning to learn
-            from large, pre-collected datasets.
-            In this work, we present Behavior Transformer (BeT), a new technique to model unlabeled demonstration data
-            with multiple modes.
-            BeT retrofits standard transformer architectures with action discretization coupled with a multi-task
-            action correction inspired by offset prediction in object detection.
-            This allows us to leverage the multi-modal modeling ability of modern transformers to predict multi-modal
-            continuous actions.
-            We experimentally evaluate BeT on a variety of robotic manipulation and self-driving behavior datasets.
-            We show that BeT significantly improves over prior state-of-the-art work on solving demonstrated tasks while
-            capturing the major modes present in the pre-collected datasets.
-            Finally, through an extensive ablation study we further analyze the importance of every crucial component in
-            BeT.
+            We propose CLIP-Fields, an implicit scene model that can be trained with no direct human supervision.
+            This model learns a mapping from spatial locations to semantic embedding vectors.
+            The mapping can then be used for a variety of tasks, such as segmentation, instance identification, semantic
+            search over space, and view localization.
+            Most importantly, the mapping can be trained with supervision coming only from web-image and web-text
+            trained models such as CLIP, Detic, and Sentence-BERT.
+            When compared to baselines like Mask-RCNN, our method outperforms on few-shot instance identification or
+            semantic segmentation on the HM3D dataset with only a fraction of the examples.
+            Finally, we show that using CLIP-Fields as a scene memory, robots can perform semantic navigation in
+            real-world environments.
           </p>
         </div>
       </div>
@@ -140,79 +165,51 @@
     <!--Videos-->
     <div class="container">
       <div class="row">
-        <div class="col-12">
-          <h2 class="center">Unconditional Rollouts of BeT</h2>
-          <p>Here, we show unconditional rollouts from BeT models trained from multi-modal demonstartions on the CARLA,
-            Block push, and Franka Kitchen environments.
-            Due to the multi-modal architecture of BeT, even in the same environment successive rollouts can achieve
-            different goals, or the same goals in different ways.
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="body-content">
-      <div class="container">
-        <div class="grid-display">
-          <div class="row">
-            <div class="col-6">
-              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/pushblock/1.mp4" type="video/mp4">
-              </video>
-            </div>
-            <div class="col-6">
-              <video class="img demovid playsinline" style="height: 600" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/pushblock/2.mp4" type="video/mp4">
-              </video>
-            </div>
-            <div class="col-12 right">
-              <span>
-                <a class="replay" href="more/blockpush" target="_blank">More</a>
-              </span>
+        <div class="col-12" style="width: 100%">
+          <h2 class="center m-bottom" id="experiment_tag">Real World Robot Experiments</h2>
+          <div class="col-12 img" id="nyu_hero_video">
+            <h4>Robot queries in a real lab kitchen setup.</h4>
+            <video id="nyu_robot_run" class="center" style="width: 100%" muted autoplay loop>
+              <source src="./mfiles/nyu_robot_run_clipped_small.mp4" type="video/mp4">
+            </video>
+            <progress id="progress_nyu" max="100" value="0">Progress</progress>
+            <div style="margin: none; width: 100%;">
+              <button onclick="seek('nyu_robot_run', 'progress_nyu',  0, 17.33)" class="seek_button" id="nyu_wash"
+                style="width: calc((1733% - 0%) / 55.75);">Wash my dishes</button>
+              <button onclick="seek('nyu_robot_run', 'progress_nyu',  17.34, 29.00)" class="seek_button" id="nyu_trash"
+                style="width: calc((2900% - 1734%) / 55.75);">Throw out my
+                trash</button>
+              <button onclick=" seek('nyu_robot_run', 'progress_nyu', 29.05, 43.2)" class="seek_button" id="nyu_coffee"
+                style="width: calc((4320% - 2905%) / 55.75);">Make me a
+                coffee</button>
+              <button onclick="seek('nyu_robot_run', 'progress_nyu',  43.21, 55.03)" class="seek_button" id="nyu_lunch"
+                style="width: calc((5503% - 4321%) / 55.75);">Warm up my
+                lunch</button>
+              <button onclick="seek('nyu_robot_run', 'progress_nyu',  0, 55.03)" class="seek_button" id="nyu_full"
+                style="width: calc((5550% - 0%) / 55.75);">Full video</button>
             </div>
           </div>
-          <br><br>
-          <div class="row">
-            <div class="col-6">
-              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/kitchen/1.mp4" type="video/mp4">
-              </video>
-            </div>
-            <div class="col-6 center">
-              <video class="img demovid" style="height: 600" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/kitchen/2.mp4" type="video/mp4">
-              </video>
-            </div>
+          <div class="col-12 img" id="pit_hero_video">
+            <h4>Robot queries in a real lounge/library setup.</h4>
+            <video id="pit_robot_run" class="center" style="width: 100%" muted autoplay loop>
+              <source src="./mfiles/pit_robot_run_clipped_small.mp4" type="video/mp4">
+            </video>
 
-            <div class="col-12 right">
-              <span>
-                <a class="replay" href="more/kitchen" target="_blank">More</a>
-              </span>
-            </div>
-          </div>
-          <br><br>
-          <div class="row">
-            <div class="col-6">
-              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/carla/1_over.mp4" type="video/mp4">
-              </video>
-            </div>
-            <div class="col-6">
-              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/carla/2_over.mp4" type="video/mp4">
-              </video>
-            </div>
-          </div>
-          <div class="row">
-
-            <div class="col-6 left">
-              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/carla/1_obs.mp4" type="video/mp4">
-              </video>
-            </div>
-            <div class="col-6 left">
-              <video class="img demovid" style="width: 100%" playsinline controls muted autoplay loop>
-                <source src="./mfiles/env/carla/2_obs.mp4" type="video/mp4">
-              </video>
+            <progress id="progress_pit" max="100" value="0">Progress</progress>
+            <div style="margin: none; width: 100%;">
+              <button onclick="seek('pit_robot_run', 'progress_pit',  0, 9.66)" class="seek_button" id="pit_bookshelf"
+                style="width: calc(966% / 58.5);">Bookshelf</button>
+              <button onclick="seek('pit_robot_run', 'progress_pit',  9.67, 31.5)" class="seek_button" id="pit_relax"
+                style="width: calc((3150% - 967%) / 58.5);">Sit down and
+                relax</button>
+              <button onclick="seek('pit_robot_run', 'progress_pit',  31.52, 43.33)" class="seek_button" id="pit_write"
+                style="width: calc((4333% - 3152%) / 58.5);">Write a novel</button>
+              <button onclick="seek('pit_robot_run', 'progress_pit',  43.34, 57.9)" class="seek_button" id="pit_putdown"
+                style="width: calc((5790% - 4335%) / 58.5);">Put down my
+                novel</button>
+              <button onclick="seek('pit_robot_run', 'progress_pit',  0, 57.9)" class="seek_button" id="pit_full"
+                style="width: 100%;">Full
+                video</button>
             </div>
           </div>
         </div>
@@ -263,9 +260,7 @@
     <div class="container">
       <div class="row">
         <div class="col-12 center img">
-          <video style="width: 100%" id="desc_2" onended="monitor('replay_2')" playsinline muted autoplay>
-            <source src="./mfiles/2.mp4" type="video/mp4">
-          </video>
+          <img class="center" src="./mfiles/data_processing.png" style="width:100%"></img>
           <span class="replay" id="replay_2" onclick="replay('desc_2', 'replay_2')">replay</span>
           <p>
             Our MinGPT model learns to predict a categorical distribution over the bins, as well as a residual
@@ -283,10 +278,7 @@
     <div class="container">
       <div class="row">
         <div class="col-12 center img">
-          <video style="width: 100%" id="desc_3" onended="monitor('replay_3')" playsinline muted autoplay>
-            <source src="./mfiles/3.mp4" type="video/mp4">
-          </video>
-          <span class="replay" id="replay_3" onclick="replay('desc_3', 'replay_3')">replay</span>
+          <img class="center" src="./mfiles/arch.png" style="width:100%"></img>
           <p>
             During test, our model predicts a bin, and then uses the bin center and the associated residual continous
             action to reconstruct a full continous action to execute in the environment.
@@ -351,19 +343,22 @@
   var abstract_tag = document.querySelector("#abstract_tag");
   var abstract_text = document.querySelector("#abstract_text");
   var hide_logo = document.querySelector("#hide_logo");
-  abstract_text.style.display = "none";
+  // abstract_text.style.display = "none";
   abstract_tag.addEventListener("click", function () {
     abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
     hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
   });
-  retime(15, "demovid");
+  // retime(15, "demovid");
 
   var ids = ["replay_1", "replay_2", "replay_3"];
   for (id in ids) {
-    console.log(ids[id]);
+    // console.log(ids[id]);
     document.getElementById(ids[id]).style.opacity = 0;
-    document.getElementById(ids[id]).style.cursor = "pointer";
+    document.getElementById(ids[id]).style.curso
+    r = "pointer";
   }
+  progressLoop("nyu_robot_run", "progress_nyu");
+  progressLoop("pit_robot_run", "progress_pit");
 
 </script>
 
