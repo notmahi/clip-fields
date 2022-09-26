@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js">
+</script>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:description" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:image" content="../../mfiles/arch bet.001.png" />
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta name="twitter:description"
+    content="Behavior Transformer (BeT), a new technique to model unlabeled demonstration data with multiple modes.">
+  <meta name="twitter:image" content="../../mfiles/arch bet.001.png" />
+  <meta name="twitter:creator" content="@notmahi" />
+  <link rel="shortcut icon" href="img/favicon.png">
+  <link rel="stylesheet" href="../../css/simple-grid.css">
+  <title>Behavior Transformers: Cloning k modes with one stone</title>
+  <script>
+    function retime(duration, class_name) {
+      var videos = document.getElementsByClassName(class_name);
+      for (var i = 0; i < videos.length; i++) {
+        var video = videos[i];
+        video.onloadeddata = function () {
+          this.playbackRate = this.duration / duration;
+        };
+      }
+    }
+
+  </script>
+</head>
+
+<body>
+  <div class="jumbotron">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center">
+          <h1>Behavior Transformers: <br />Cloning <math display="inline">
+              <mi>k</mi>
+            </math> modes with one stone</h1>
+        </div>
+        <div class="col-3 hidden-sm"></div>
+        <div class="col-6 center">
+          <a style="text-decoration: none" href="https://mahis.life/bet">
+            <h3 style="color: #F5A803">Go back to main site</h3>
+          </a>
+        </div>
+      </div>
+    </div>
+    <!--Videos-->
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2 class="center">Unconditional Rollouts of BeT on Franka Kitchen</h2>
+        </div>
+      </div>
+    </div>
+    <div class="body-content">
+      <div class="container">
+        <div class="grid-display">
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/kblh_small.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/kbls_small.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/mklh_small.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/mkls_small.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/kbth_small.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/kbtl_small.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/mkth_small.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="col-6">
+              <video class="img demovid" style="height: 600" playsinline muted autoplay loop>
+                <source src="../../mfiles/env/kitchen/all/mktl_small.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <footer>
+  </footer>
+</body>
+<script>
+  var abstract_tag = document.querySelector("#abstract_tag");
+  var abstract_text = document.querySelector("#abstract_text");
+  var hide_logo = document.querySelector("#hide_logo");
+  abstract_text.style.display = "none";
+  abstract_tag.addEventListener("click", function () {
+    abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
+    hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
+  });
+  retime(15, "demovid");
+
+  var ids = ["replay_1", "replay_2", "replay_3"];
+  for (id in ids) {
+    console.log(ids[id]);
+    document.getElementById(ids[id]).style.opacity = 0;
+    document.getElementById(ids[id]).style.cursor = "pointer";
+  }
+
+</script>
+
+</html>
