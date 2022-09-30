@@ -30,11 +30,9 @@ from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
 
 
-DETIC_PATH = os.environ.get("DETIC_PATH", Path(__file__) / "../Detic")
-LSEG_PATH = os.environ.get(
-    "LSEG_PATH", Path(__file__) / "../lang-seg/"
-)
-# from google.colab.patches import cv2_imshow
+DETIC_PATH = os.environ.get("DETIC_PATH", Path(__file__).parent / "../Detic")
+LSEG_PATH = os.environ.get("LSEG_PATH", Path(__file__).parent / "../LSeg/")
+
 sys.path.insert(0, f"{LSEG_PATH}/")
 from encoding.models.sseg import BaseNet
 from additional_utils.models import LSeg_MultiEvalModule
@@ -93,10 +91,12 @@ def get_clip_embeddings(vocabulary, prompt="a "):
     emb = text_encoder(texts).detach().permute(1, 0).contiguous().cpu()
     return emb
 
+
 # New visualizer class to disable jitter.
 from detectron2.utils.visualizer import Visualizer
-from  detectron2.utils.visualizer import ColorMode
+from detectron2.utils.visualizer import ColorMode
 import matplotlib.colors as mplc
+
 
 class LowJitterVisualizer(Visualizer):
     def _jitter(self, color):
@@ -119,6 +119,7 @@ class LowJitterVisualizer(Visualizer):
         res = np.clip(vec + color, 0, 1)
         return tuple(res)
 
+
 SCANNET_NAME_TO_COLOR = {
     x: np.array(c) for x, c in zip(CLASS_LABELS_200, SCANNET_COLOR_MAP_200.values())
 }
@@ -126,6 +127,7 @@ SCANNET_NAME_TO_COLOR = {
 SCANNET_ID_TO_COLOR = {
     i: np.array(c) for i, c in enumerate(SCANNET_COLOR_MAP_200.values())
 }
+
 
 class DeticDenseLabelledDataset(Dataset):
     LSEG_LABEL_WEIGHT = 0.1
@@ -139,15 +141,16 @@ class DeticDenseLabelledDataset(Dataset):
         device: str = "cuda",
         batch_size: int = 1,
         detic_threshold: float = 0.3,
-        num_images_to_label: int = 1000,
+        num_images_to_label: int = -1,
         subsample_prob: float = 0.2,
-        use_lseg: bool = True,
-        use_extra_classes: bool = True,
+        use_lseg: bool = False,
+        use_extra_classes: bool = False,
         use_gt_classes: bool = True,
-        exclude_gt_images: bool = True,
+        exclude_gt_images: bool = False,
         gt_inst_images: Optional[List[int]] = None,
         gt_sem_images: Optional[List[int]] = None,
         visualize_results: bool = False,
+        visualization_path: Optional[str] = None,
         use_scannet_colors: bool = True,
     ):
         dataset = view_dataset
@@ -180,13 +183,16 @@ class DeticDenseLabelledDataset(Dataset):
         images_to_label = self.get_best_sem_segmented_images(
             dataset, num_images_to_label, gt_inst_images, gt_sem_images
         )
-
         self._use_lseg = use_lseg
         self._use_extra_classes = use_extra_classes
         self._use_gt_classes = use_gt_classes
         self._use_scannet_colors = use_scannet_colors
-        
+
         self._visualize = visualize_results
+        if self._visualize:
+            assert visualization_path is not None
+            self._visualization_path = Path(visualization_path)
+            os.makedirs(self._visualization_path, exist_ok=True)
         # First, setup detic with the combined classes.
         self._setup_detic_all_classes(view_data)
         self._setup_detic_dense_labels(
@@ -225,7 +231,9 @@ class DeticDenseLabelledDataset(Dataset):
         # Now just iterate over the images and do Detic preprocessing.
         dataloader = DataLoader(dataset, batch_size=1, shuffle=False, pin_memory=False)
         label_idx = 0
-        for idx, data_dict in tqdm.tqdm(enumerate(dataloader), total=len(dataset)):
+        for idx, data_dict in tqdm.tqdm(
+            enumerate(dataloader), total=len(dataset), desc="Calculating Detic features"
+        ):
             if idx not in images_to_label:
                 continue
             rgb = einops.rearrange(data_dict["rgb"][..., :3], "b h w c -> b c h w")
@@ -250,9 +258,17 @@ class DeticDenseLabelledDataset(Dataset):
                     valid_mask,
                 ) = self._reshape_coordinates_and_get_valid(coordinates, data_dict)
                 if self._visualize:
-                    v = Visualizer(reshaped_rgb, self.metadata)
+                    v = LowJitterVisualizer(
+                        reshaped_rgb,
+                        self.metadata,
+                        instance_mode=ColorMode.SEGMENTATION,
+                    )
                     out = v.draw_instance_predictions(instance.to("cpu"))
-                    cv2.imwrite(f"./rgb_annotated/{idx}.jpg", out.get_image()[:,:,::-1], [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                    cv2.imwrite(
+                        self._visualization_path / f"{idx}.jpg",
+                        out.get_image()[:, :, ::-1],
+                        [int(cv2.IMWRITE_JPEG_QUALITY), 80],
+                    )
                 for pred_class, pred_mask, pred_score, feature in zip(
                     instance.pred_classes.cpu(),
                     instance.pred_masks.cpu(),
@@ -264,17 +280,27 @@ class DeticDenseLabelledDataset(Dataset):
                     # Go over each instance and add it to the DB.
                     total_points = len(reshaped_coordinates[real_mask])
                     resampled_indices = torch.rand(total_points) < self._subsample_prob
-                    self._label_xyz.append(reshaped_coordinates[real_mask][resampled_indices])
-                    self._label_rgb.append(reshaped_rgb[real_mask_rect][resampled_indices])
+                    self._label_xyz.append(
+                        reshaped_coordinates[real_mask][resampled_indices]
+                    )
+                    self._label_rgb.append(
+                        reshaped_rgb[real_mask_rect][resampled_indices]
+                    )
                     self._text_ids.append(
                         torch.ones(total_points)[resampled_indices]
                         * self._new_class_to_old_class_mapping[pred_class.item()]
                     )
-                    self._label_weight.append(torch.ones(total_points)[resampled_indices] * pred_score)
-                    self._image_features.append(
-                        einops.repeat(feature, "d -> b d", b=total_points)[resampled_indices]
+                    self._label_weight.append(
+                        torch.ones(total_points)[resampled_indices] * pred_score
                     )
-                    self._label_idx.append(torch.ones(total_points)[resampled_indices] * label_idx)
+                    self._image_features.append(
+                        einops.repeat(feature, "d -> b d", b=total_points)[
+                            resampled_indices
+                        ]
+                    )
+                    self._label_idx.append(
+                        torch.ones(total_points)[resampled_indices] * label_idx
+                    )
                     self._distance.append(torch.zeros(total_points)[resampled_indices])
                     label_idx += 1
 
@@ -284,7 +310,11 @@ class DeticDenseLabelledDataset(Dataset):
         if self._use_lseg:
             # Now, get to LSeg
             self._setup_lseg()
-            for idx, data_dict in tqdm.tqdm(enumerate(dataloader), total=len(dataset)):
+            for idx, data_dict in tqdm.tqdm(
+                enumerate(dataloader),
+                total=len(dataset),
+                desc="Calculating LSeg features",
+            ):
                 if idx not in images_to_label:
                     continue
                 rgb = einops.rearrange(data_dict["rgb"][..., :3], "b h w c -> b c h w")
@@ -292,7 +322,7 @@ class DeticDenseLabelledDataset(Dataset):
                 for image, coordinates in zip(rgb, xyz):
                     # Now figure out the LSeg lables.
                     with torch.no_grad():
-                        unsqueezed_image = image.unsqueeze(0).cuda()
+                        unsqueezed_image = image.unsqueeze(0).float().cuda()
                         resized_image = self.resize(image).unsqueeze(0).cuda()
                         tfm_image = self.transform(unsqueezed_image)
                         outputs = self.evaluator.parallel_forward(
@@ -316,10 +346,16 @@ class DeticDenseLabelledDataset(Dataset):
                         real_mask = pred_mask[valid_mask]
                         real_mask_rect = valid_mask & pred_mask
                         total_points = len(reshaped_coordinates[real_mask])
-                        resampled_indices = torch.rand(total_points) < self._subsample_prob
+                        resampled_indices = (
+                            torch.rand(total_points) < self._subsample_prob
+                        )
                         if total_points:
-                            self._label_xyz.append(reshaped_coordinates[real_mask][resampled_indices])
-                            self._label_rgb.append(reshaped_rgb[real_mask_rect][resampled_indices])
+                            self._label_xyz.append(
+                                reshaped_coordinates[real_mask][resampled_indices]
+                            )
+                            self._label_rgb.append(
+                                reshaped_rgb[real_mask_rect][resampled_indices]
+                            )
                             # Ideally, this should give all classes their true class label.
                             self._text_ids.append(
                                 torch.ones(total_points)[resampled_indices]
@@ -327,14 +363,20 @@ class DeticDenseLabelledDataset(Dataset):
                             )
                             # Uniform label confidence of LSEG_LABEL_WEIGHT
                             self._label_weight.append(
-                                torch.ones(total_points)[resampled_indices] * self.LSEG_LABEL_WEIGHT
+                                torch.ones(total_points)[resampled_indices]
+                                * self.LSEG_LABEL_WEIGHT
                             )
                             self._image_features.append(
-                                einops.repeat(image_feature, "d -> b d", b=total_points)[resampled_indices]
+                                einops.repeat(
+                                    image_feature, "d -> b d", b=total_points
+                                )[resampled_indices]
                             )
-                            self._label_idx.append(torch.ones(total_points)[resampled_indices] * label_idx)
+                            self._label_idx.append(
+                                torch.ones(total_points)[resampled_indices] * label_idx
+                            )
                             self._distance.append(
-                                torch.ones(total_points)[resampled_indices] * self.LSEG_IMAGE_DISTANCE
+                                torch.ones(total_points)[resampled_indices]
+                                * self.LSEG_IMAGE_DISTANCE
                             )
                     # Since they all get the same image, here label idx is increased once
                     # at the very end.
@@ -390,9 +432,14 @@ class DeticDenseLabelledDataset(Dataset):
     def _reshape_coordinates_and_get_valid(self, coordinates, data_dict):
         if "conf" in data_dict:
             # Real world data, find valid mask
-            valid_mask = torch.as_tensor(
-                (~np.isnan(data_dict["depth"]) & (data_dict["conf"] == 2)) & (data_dict["depth"] < 3.0)
-            ).squeeze(0).bool()
+            valid_mask = (
+                torch.as_tensor(
+                    (~np.isnan(data_dict["depth"]) & (data_dict["conf"] == 2))
+                    & (data_dict["depth"] < 3.0)
+                )
+                .squeeze(0)
+                .bool()
+            )
             reshaped_coordinates = torch.as_tensor(coordinates)
             return reshaped_coordinates, valid_mask
         else:
@@ -489,14 +536,8 @@ class DeticDenseLabelledDataset(Dataset):
         self._num_true_lseg_classes = len(self._lseg_classes)
         self._all_lseg_classes = self._all_classes  # + ["Other"]
 
-        # self._unfound_offset = 0
-        # # Figure out the class labels.
-        # self._lseg_class_labels = {
-        #     classname: self.find_in_class(classname) for classname in self._all_classes
-        # }
         # We will try to classify all the classes, but will use LSeg labels for classes that
         # are not identified by Detic.
-
         self.module = LSegModule.load_from_checkpoint(
             checkpoint_path=f"{LSEG_PATH}/checkpoints/demo_e200.ckpt",
             data_path="",
@@ -537,10 +578,7 @@ class DeticDenseLabelledDataset(Dataset):
         model.std = [0.5, 0.5, 0.5]
 
         self.transform = transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-        self.resize = transforms.Resize(224)
-        self.resize_coords = transforms.Resize(
-            224, interpolation=transforms.InterpolationMode.NEAREST
-        )
+        self.resize = transforms.Resize((224, 224))
 
         self.evaluator = LSeg_MultiEvalModule(model, scales=self.scales, flip=True).to(
             self._device

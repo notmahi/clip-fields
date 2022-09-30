@@ -1,22 +1,6 @@
 import torch.nn as nn
 
 
-def seed_everything(seed: int):
-    random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-
-
-class ImplicitDataparallel(nn.DataParallel):
-    def compute_loss(self, *args, **kwargs):
-        return self.module.compute_loss(*args, **kwargs)
-
-    @property
-    def temperature(self):
-        return self.module.temperature
-
 def mlp(
     input_dim,
     hidden_dim,
@@ -88,3 +72,12 @@ class MLP(nn.Module):
 
     def forward(self, x):
         return self.trunk(x)
+
+
+class ImplicitDataparallel(nn.DataParallel):
+    def compute_loss(self, *args, **kwargs):
+        return self.module.compute_loss(*args, **kwargs)
+
+    @property
+    def temperature(self):
+        return self.module.temperature

@@ -10,14 +10,14 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 import tqdm
-from pathlib import Path
 from omegaconf import OmegaConf
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, Subset
 
 import wandb
+from dataloaders.r3d import R3DSemanticDataset
 from dataloaders.open_classification import ClassificationExtractor
 from dataloaders.real_dataset import DeticDenseLabelledDataset
-from utils import ImplicitDataparallel
+from misc import ImplicitDataparallel
 from grid_hash_model import GridCLIPModel
 
 
@@ -48,11 +48,11 @@ def train(
     labelling_model: GridCLIPModel,
     optim: torch.optim.Optimizer,
     classifier: ClassificationExtractor,
-    device: Union[str, torch.device]=DEVICE,
-    exp_decay_coeff: float =EXP_DECAY_COEFF,
-    image_to_label_loss_ratio: float=IMAGE_TO_LABEL_CLIP_LOSS_SCALE,
-    label_to_image_loss_ratio: float =LABEL_TO_IMAGE_LOSS_SCALE,
-    disable_tqdm: bool=False,
+    device: Union[str, torch.device] = DEVICE,
+    exp_decay_coeff: float = EXP_DECAY_COEFF,
+    image_to_label_loss_ratio: float = IMAGE_TO_LABEL_CLIP_LOSS_SCALE,
+    label_to_image_loss_ratio: float = LABEL_TO_IMAGE_LOSS_SCALE,
+    disable_tqdm: bool = False,
     metric_calculators: Dict[str, Dict[str, torchmetrics.Metric]] = {},
 ):
     total_loss = 0
@@ -65,7 +65,7 @@ def train(
     labelling_model.train()
     total = len(clip_train_loader)
     for clip_data_dict in tqdm.tqdm(
-        clip_train_loader, total=total, disable=disable_tqdm
+        clip_train_loader, total=total, disable=disable_tqdm, desc="Training CLIP-field"
     ):
         optim.zero_grad()
 
@@ -83,8 +83,12 @@ def train(
         ) = labelling_model(xyzs)
 
         # Calculate the loss from the image to label side.
-        image_label_index: torch.Tensor = clip_data_dict["img_idx"].to(device).reshape(-1, 1)
-        language_label_index: torch.Tensor = clip_data_dict["label"].to(device).reshape(-1, 1)
+        image_label_index: torch.Tensor = (
+            clip_data_dict["img_idx"].to(device).reshape(-1, 1)
+        )
+        language_label_index: torch.Tensor = (
+            clip_data_dict["label"].to(device).reshape(-1, 1)
+        )
         batch_size = len(image_label_index)
         image_label_mask: torch.Tensor = (
             image_label_index != image_label_index.t()
@@ -197,29 +201,51 @@ def save(
         to_save = labelling_model
     torch.save(
         to_save,
-        f"outputs/implicit_models/{save_directory}/implicit_scene_label_model_{epoch}.pt",
+        f"{save_directory}/implicit_scene_label_model_{epoch}.pt",
     )
-    # Save the optimizer as well.
     torch.save(
         optim.state_dict(),
-        f"outputs/implicit_models/{save_directory}/implicit_scene_label_model_optimizer_{epoch}.pt",
+        f"{save_directory}/implicit_scene_label_model_optimizer_{epoch}.pt",
     )
     torch.save(
         to_save,
-        f"outputs/implicit_models/{save_directory}/implicit_scene_label_model_latest.pt",
+        f"{save_directory}/implicit_scene_label_model_latest.pt",
     )
     return 0
 
 
-def get_real_dataset(dataset_path):
-    location_train_dataset_1 = torch.load(dataset_path)
-    return location_train_dataset_1
+def get_real_dataset(cfg):
+    if cfg.use_cache:
+        location_train_dataset = torch.load(cfg.saved_dataset_path)
+    else:
+        view_dataset = R3DSemanticDataset(cfg.dataset_path)
+        if cfg.sample_freq != 1:
+            view_dataset = Subset(
+                view_dataset,
+                torch.arange(0, len(view_dataset), cfg.sample_freq),
+            )
+        location_train_dataset = DeticDenseLabelledDataset(
+            view_dataset,
+            clip_model_name=cfg.web_models.clip,
+            sentence_encoding_model_name=cfg.web_models.sentence,
+            device=cfg.device,
+            detic_threshold=cfg.detic_threshold,
+            subsample_prob=cfg.subsample_prob,
+            use_lseg=cfg.use_lseg,
+            use_extra_classes=cfg.use_extra_classes,
+            use_gt_classes=cfg.use_gt_classes_in_detic,
+            visualize_results=cfg.visualize_detic_results,
+            visualization_path=cfg.detic_visualization_path,
+        )
+        if cfg.cache_result:
+            torch.save(location_train_dataset, cfg.cache_path)
+    return location_train_dataset
 
 
 @hydra.main(version_base="1.2", config_path="configs", config_name="train.yaml")
 def main(cfg):
     seed_everything(cfg.seed)
-    real_dataset: DeticDenseLabelledDataset = get_real_dataset(cfg.saved_dataset_path)
+    real_dataset: DeticDenseLabelledDataset = get_real_dataset(cfg)
     # Setup our model with min and max coordinates.
     max_coords, _ = real_dataset._label_xyz.max(dim=0)
     min_coords, _ = real_dataset._label_xyz.min(dim=0)
@@ -253,19 +279,18 @@ def main(cfg):
                 ] = new_metric
 
     labelling_model = GridCLIPModel(
-            image_rep_size=real_dataset[0]["clip_image_vector"].shape[-1],
-            text_rep_size=real_dataset[0]["clip_vector"].shape[-1],
-            mlp_depth=cfg.mlp_depth,
-            mlp_width=cfg.mlp_width,
-            log2_hashmap_size=cfg.log2_hashmap_size,
-            segmentation_classes=len(real_dataset._all_classes) + 1,  # Quick patch
-            num_levels=cfg.num_grid_levels,
-            level_dim=cfg.level_dim,
-            per_level_scale=cfg.per_level_scale,
-            max_coords=max_coords,
-            min_coords=min_coords,
-        )
-    label_voxel_count = int(cfg.label_voxel_count)
+        image_rep_size=real_dataset[0]["clip_image_vector"].shape[-1],
+        text_rep_size=real_dataset[0]["clip_vector"].shape[-1],
+        mlp_depth=cfg.mlp_depth,
+        mlp_width=cfg.mlp_width,
+        log2_hashmap_size=cfg.log2_hashmap_size,
+        num_levels=cfg.num_grid_levels,
+        level_dim=cfg.level_dim,
+        per_level_scale=cfg.per_level_scale,
+        max_coords=max_coords,
+        min_coords=min_coords,
+    )
+    epoch_size = int(cfg.epoch_size)
 
     if torch.cuda.device_count() > 1 and cfg.dataparallel:
         batch_multiplier = torch.cuda.device_count()
@@ -273,7 +298,7 @@ def main(cfg):
         batch_multiplier = 1
     label_sampler = RandomSampler(
         data_source=real_dataset,
-        num_samples=label_voxel_count,
+        num_samples=epoch_size,
         replacement=True,
     )
     clip_train_loader = DataLoader(
@@ -285,42 +310,34 @@ def main(cfg):
     )
 
     logging.info(f"Total train dataset sizes: {len(real_dataset)}")
-    logging.info(
-        f"Epochs for one pass over dataset: {len(real_dataset) // label_voxel_count}"
-    )
+    logging.info(f"Epochs for one pass over dataset: {len(real_dataset) // epoch_size}")
 
     labelling_model = labelling_model.to(cfg.device)
 
     run_id = wandb.util.generate_id()
     save_directory = cfg.save_directory_real + f"/{run_id}"
     loaded = False
-    if os.path.exists("outputs/implicit_models/{}/".format(save_directory)):
+    if os.path.exists("{}/".format(save_directory)):
         # First find out which epoch is the latest one.
         all_files = glob.glob(
-            "outputs/implicit_models/{}/implicit_scene_label_model_*.pt".format(
-                save_directory
-            )
+            "{}/implicit_scene_label_model_*.pt".format(save_directory)
         )
         if len(all_files) > 0:
             # Find out which is the latest checkpoint.
             epoch = 0
-            model_path = (
-                "outputs/implicit_models/{}/implicit_scene_label_model_{}.pt".format(
-                    save_directory, epoch
-                )
+            model_path = "{}/implicit_scene_label_model_{}.pt".format(
+                save_directory, epoch
             )
             while os.path.exists(model_path):
                 epoch += SAVE_EVERY
-                model_path = "outputs/implicit_models/{}/implicit_scene_label_model_{}.pt".format(
+                model_path = "{}/implicit_scene_label_model_{}.pt".format(
                     save_directory, epoch
                 )
             epoch -= SAVE_EVERY
-            model_path = (
-                "outputs/implicit_models/{}/implicit_scene_label_model_{}.pt".format(
-                    save_directory, epoch
-                )
+            model_path = "{}/implicit_scene_label_model_{}.pt".format(
+                save_directory, epoch
             )
-            optim_path = "outputs/implicit_models/{}/implicit_scene_label_model_optimizer_{}.pt".format(
+            optim_path = "{}/implicit_scene_label_model_optimizer_{}.pt".format(
                 save_directory, epoch
             )
             logging.info(f"Resuming job from: {model_path}")
@@ -343,7 +360,7 @@ def main(cfg):
     if not loaded:
         logging.info("Could not find old runs, starting fresh...")
         os.makedirs(
-            "outputs/implicit_models/{}/".format(save_directory),
+            "{}/".format(save_directory),
             exist_ok=True,
         )
         epoch = 0
@@ -355,7 +372,9 @@ def main(cfg):
             weight_decay=cfg.weight_decay,
         )
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optim, milestones=[50], gamma=0.1,
+            optim,
+            milestones=[50],
+            gamma=0.1,
         )
 
     dataparallel = False
@@ -368,15 +387,12 @@ def main(cfg):
         id=run_id,
         tags=[
             f"model/{cfg.model_type}",
-            f"scene/{cfg.scene.base}",
         ],
         config=OmegaConf.to_container(cfg, resolve=True),
         resume=resume,
     )
     # Set the extra parameters.
-    wandb.config.human_labelled_points = 0
     wandb.config.web_labelled_points = len(real_dataset)
-    wandb.config.num_seen_instances = 0
 
     # Disable tqdm if we are running inside slurm
     job_id = os.environ.get("SLURM_JOB_ID")

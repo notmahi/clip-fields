@@ -6,6 +6,10 @@ wandb
 training.log
 core
 
+# Data files
+*.r3d
+*.zip
+
 # Slurm files
 *.sbatch
 wrapper.sh

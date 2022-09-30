@@ -1,11 +1,11 @@
 from typing import Optional
-from gridencoder import GridEncoder
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils import MLP
+from gridencoder import GridEncoder
+from misc import MLP
 
 
 class GridCLIPModel(nn.Module):

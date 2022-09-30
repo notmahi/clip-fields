@@ -4,6 +4,7 @@ import clip
 from sentence_transformers import SentenceTransformer
 from typing import List
 
+
 class ClassificationExtractor:
     PROMPT = "A "
     EMPTY_CLASS = "Other"
