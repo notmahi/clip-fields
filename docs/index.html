@@ -220,20 +220,14 @@
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom">Method</h2>
-          <p>BeT is based of three key insights.
+          <p>CLIP-Fields is based off of a simple idea:
           <ul style="font-size: 1.125rem;font-weight: 200;line-height: 1.8">
-            <li>First, we leverage the context
-              based multi-token prediction ability of transformer-based sequence models to predict multi-modal
-              actions.
+            <li>Webscale models like CLIP and Detic provide lots of semantic information about objects that can be used for robot tasks, but don't encode spatial qualities of this information.
             </li>
-            <li>Second, since transformer-based sequence models are naturally suited to predicting
-              discrete classes, we cluster continuous actions into discrete bins using k-means. This allows us
-              to model high-dimensional, continuous multi-modal action distributions as categorical distributions
-              without learning complicated generative models.</li>
-            <li>Third, to ensure that the actions sampled
-              from BeT are useful for online rollouts, we concurrently learn a residual action corrector to
-              produce
-              continuous actions for a specific sampled action bin.</li>
+            <li>NeRF-like approaches, on the other hand, have recently shown that they can capture very detailed scene information.
+	    </li>
+            <li>We can combine these two, using a novel contrastive loss in order to capture scene-specific embeddings. We supervise multiple "heads," including object detection and CLIP, based on these webscale vision models, which allows us to do open-vocabulary queries at test time.
+	    </li>
           </ul>
           </p>
         </div>
