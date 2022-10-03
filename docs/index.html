@@ -7,15 +7,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta property="og:title" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
-  <meta property="og:description" content="Behavior Transformers: Cloning k modes with one stone">
+  <meta property="og:description" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
-  <meta property="og:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
+  <meta property="og:image" content="https://notmahi.github.io/clip-fields/mfiles/data_processing.jpeg" />
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
-  <meta name="twitter:description"
-    content="Behavior Transformer (BeT), a new technique to model unlabeled demonstration data with multiple modes.">
-  <meta name="twitter:image" content="https://notmahi.github.io/bet/mfiles/arch bet.001.png" />
+  <meta name="twitter:description" content="CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory">
+  <meta name="twitter:image" content="https://notmahi.github.io/clip-fields/mfiles/data_processing.jpeg" />
   <meta name="twitter:creator" content="@notmahi" />
   <link rel="shortcut icon" href="img/favicon.png">
   <link rel="stylesheet" href="css/simple-grid.css">
@@ -92,12 +91,12 @@
         </div>
         <div class="col-2 hidden-sm"></div>
         <div class="col-2 center">
-          <a style="text-decoration: none" href="https://arxiv.org/abs/2206.11251">
+          <a style="text-decoration: none" href="#">
             <h3 style="color: #dd00ff">Paper</h3>
           </a>
         </div>
         <div class="col-2 center">
-          <a style="text-decoration: none" href="https://github.com/notmahi/bet">
+          <a style="text-decoration: none" href="https://github.com/notmahi/clip-fields">
             <h3 style="color: #dd00ff">Code</h3>
           </a>
         </div>
@@ -142,6 +141,18 @@
         </div>
       </div>
 
+      <div class="row">
+        <div class="col-12">
+          <p>
+            <strong>Tl;dr</strong> CLIP-Fields is a novel weakly supervised approach for learning a semantic robot
+            memory that can respond to natural language queries, all from raw RGB-D and odometry data.
+            We combine the language understanding capabilites of novel vision-language models (VLMs) like CLIP, large
+            language models like sentence BERT, and combine them with spatial understanding capabilites of neural
+            radiance field (NeRF) style architectures to build a spatial database that holds semantic information in it.
+          </p>
+        </div>
+      </div>
+
       <!--Abstract-->
       <div class="row">
         <div class="col-12">
@@ -161,8 +172,8 @@
         </div>
       </div>
     </div>
-    <!--Videos-->
 
+    <!--Videos-->
     <div class="container">
       <div class="row">
         <div class="col-12" style="width: 100%">
@@ -230,7 +241,7 @@
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom">Method</h2>
-          <p>CLIP-Fields is based off of a simple idea:
+          <p>CLIP-Fields is based off of a series of simple ideas:
           <ul style="font-size: 1.125rem;font-weight: 200;line-height: 1.8">
             <li>Webscale models like CLIP and Detic provide lots of semantic information about objects that can be used
               for robot tasks, but don't encode spatial qualities of this information.
@@ -247,48 +258,59 @@
         </div>
       </div>
     </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center img">
+          <img class="center" src="./mfiles/data_processing.jpeg" style="width:100%"></img>
+          <p>
+            We collect our real world data using an <strong>iPhone 13 Pro</strong>, whose LiDAR scanner gives us RGB-D
+            and odometry
+            information, which we use to establish a pixel-to-real world coordinate correspondense.
+          </p>
+          <p>
+            We use pre-trained models such as <a href="https://github.com/facebookresearch/Detic"
+              target="_blank">Detic</a> and <a href="https://github.com/isl-org/lang-seg" target="_blank">LSeg</a> to
+            extract the open-label semantic annotations from the RGB images, and use the labels to get <a
+              href="https://huggingface.co/sentence-transformers">Sentence-BERT</a> encoding, and proposed bounding
+            boxes to get <a href="https://github.com/openai/CLIP">CLIP</a> visual encoding.
+            Note that we need to use <i><strong>no human labelling at all</strong></i> for training our models, and all
+            of our supervision comes from pre-trained web-scale language models or VLMs.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-12 center img">
+          <img class="center" src="./mfiles/arch.jpeg" style="width:100%"></img>
+          <p>
+            Our model is an implicit function that maps each 3-dimensional spatial location to a higher dimensional
+            representation vector. Each of the vectors contain both the language-based and vision-based semantic
+            embeddings of the content of location (x, y, z).
+          </p>
+          <p>
+            The trunk of our model is an <a href="https://nvlabs.github.io/instant-ngp/" target="_blank">instant neural
+              graphics primitive</a> based hash-grid architecture as our scene representation, and use MLPs to map them
+            to higher dimensions that match the output dimension for embedding models such as Sentence-BERT or CLIP.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="container">
       <div class="row">
         <div class="col-12 center img">
           <video style="width: 100%" id="desc_1" onended="monitor('replay_1')" playsinline muted autoplay>
-            <source src="./mfiles/1.mp4" type="video/mp4">
+            <source src="./mfiles/training.mp4" type="video/mp4">
           </video>
           <span class="replay" id="replay_1" onclick="replay('desc_1', 'replay_1')">replay</span>
           <p>
-            We use a k-means based clustering to cluster continuous actions into discrete bins.
-            The bin centers, learned from the offline data, are used to convert each continous actions into a discrete
-            and a continuous component.
-            These components can be recombined into a full, continous action at any time.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-      <div class="row">
-        <div class="col-12 center img">
-          <img class="center" src="./mfiles/data_processing.png" style="width:100%"></img>
-          <span class="replay" id="replay_2" onclick="replay('desc_2', 'replay_2')">replay</span>
           <p>
-            Our MinGPT model learns to predict a categorical distribution over the bins, as well as a residual
-            continous component of an actions given bins.
-            We train the bin predictor part using a negative-log likelihood based <a
-              href="https://paperswithcode.com/method/focal-loss">Focal loss</a>, and the residual action predictor part
-            using a <a
-              href="https://lilianweng.github.io/posts/2017-12-31-object-recognition-part-3/#loss-function">multi-task
-              loss</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-      <div class="row">
-        <div class="col-12 center img">
-          <img class="center" src="./mfiles/arch.png" style="width:100%"></img>
-          <p>
-            During test, our model predicts a bin, and then uses the bin center and the associated residual continous
-            action to reconstruct a full continous action to execute in the environment.
+            We train with a contrastive loss that pushes the model's learned embeddings to be close to similar
+            embeddings in the labeled datasets and far away from dissimilar embeddings. The contrastive training also
+            helps us denoise the (sometimes) noisy labels given by the training models.
           </p>
         </div>
       </div>
@@ -312,7 +334,6 @@
             rollouts
             in CARLA and 1,000 rollouts in Block push and Kitchen environments.
           </p>
-          <img class="center" src="./mfiles/Exp Table.001.png" style="width:100%"></img>
           <p>Distribution of most frequent tasks completed in sequence in the Kitchen environment. Each task is
             colored
             differently,
@@ -329,14 +350,13 @@
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom">Future Work</h2>
-          <p>In this work, we introduce Behavior Transformers (BeT), which uses a transformer-decoder based
-            backbone with a discrete action mode predictor coupled with a continuous action offset corrector
-            to model continuous actions sequences from open-ended, multi-modal demonstrations. While
-            BeT shows promise, the truly exciting use of it would be to learn diverse behavior from human
-            demonstrations or interactions in the real world. In parallel, extracting a particular, unimodal
-            behavior
-            policy from BeT during online interactions, either by distilling the model or by generating the right
-            "prompts", would make BeT tremendously useful as a prior for online Reinforcement Learning.
+          <p>We showed that CLIP-Fields can learn 3D semantic scene representations from little or no labeled data,
+            relying on weakly-supervised web-image trained models, and that we can use these model in order to perform a
+            simple “look-at” task. CLIP-Fields allow us to answer queries of varying levels of complexity. We expect
+            this kind of 3D representation to be generally useful for robotics. For example, it ma be enriched with
+            affordances for planning; the geometric database can be readily combined with end-to-end differentiable
+            planners. In future work, we also hope to explore models that share parameters across scenes, and can handle
+            dynamic scenes and objects.
           </p>
         </div>
       </div>
@@ -354,6 +374,9 @@
     abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
     hide_logo.innerHTML = hide_logo.innerHTML == "↓" ? "↑" : "↓";
   });
+
+  document.getElementById("replay_1").style.opacity = 0;
+  document.getElementById("replay_1").style.cursor = "pointer";
   progressLoop("nyu_robot_run", "progress_nyu");
   progressLoop("pit_robot_run", "progress_pit");
 
