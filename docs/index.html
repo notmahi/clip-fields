@@ -321,26 +321,18 @@
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom">Experiments</h2>
-          <p>Performance of BeT compared with different baselines in learning from demonstrations. For CARLA, we
-            measure
-            the
-            probability of the car reaching the goal successfully. For Block push, we measure the probability of
-            reaching one and
-            two blocks, and the probabilities of pushing one and two blocks to respective squares. For Kitchen, we
-            measure the
-            probability of <math display="inline">
-              <mi>n</mi>
-            </math> tasks being completed by the model within the allotted 280 times. Evaluations are over 100
-            rollouts
-            in CARLA and 1,000 rollouts in Block push and Kitchen environments.
+          <img class="center" src="./mfiles/query_navigation.jpg" style="width:100%"></img>
+          <p>
+            On our robot, we load the CLIP-Field to help with the localization and navigation of the robot.
+            When the robot gets a new text query, we first convert it to a representation vector by encoding it with
+            sentence-BERT and CLIP-text encoder.
+            Then, we compare the representations with the representations of the XYZ coordinates in the scene and find
+            the location in space maximizing their similarity.
+            We use the robot’s navigation stack to navigate to that region, and point the robot camera to an XYZ
+            coordinate where the dot product was highest.
+            We consider the navigation task successful if the robot can navigate to and point the camera at an object
+            that satisfies the query.
           </p>
-          <p>Distribution of most frequent tasks completed in sequence in the Kitchen environment. Each task is
-            colored
-            differently,
-            and frequency is shown out of a 1,000 unconditional rollouts from the models.
-          </p>
-          <br><br>
-          <img class="center" src="./mfiles/multimodal_colorbar_flipped-1.png" style="width:100%"></img>
         </div>
       </div>
     </div>
@@ -369,6 +361,9 @@
 <script>
   var abstract_tag = document.querySelector("#abstract_tag");
   var abstract_text = document.querySelector("#abstract_text");
+  abstract_text.style.display = "none";
+  abstract_tag.style.cursor = "pointer";
+  abstract_tag.style.color = "#dd00ff";
   var hide_logo = document.querySelector("#hide_logo");
   abstract_tag.addEventListener("click", function () {
     abstract_text.style.display = abstract_text.style.display == "none" ? "block" : "none";
