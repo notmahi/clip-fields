@@ -325,7 +325,7 @@ progress[value] {
   /* Needed for Safari */
   border: none;
   /* Needed for Firefox */
-  color: #dd00ff;
+  color: #57068c;
   width: 100%;
   /* Fallback to a solid color */
 }
@@ -333,7 +333,7 @@ progress[value] {
 /* WebKit styles */
 progress[value]::-webkit-progress-value {
   background-image: linear-gradient(to right,
-      #dd00ff, #00A2FF);
+      #57068c, #57068c);
   transition: width;
   transition-timing-function: ease;
   transition-duration: 500ms;
@@ -343,6 +343,10 @@ progress[value]::-webkit-progress-value {
 /* Firefox styles */
 progress[value]::-moz-progress-bar {
   background-image: -moz-linear-gradient(right,
-      #dd00ff, #00A2FF);
+      #57068c, #57068c);
   width: 100%;
+}
+
+.seek_button {
+  color: #00A2FF;
 }
