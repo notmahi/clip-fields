@@ -274,7 +274,10 @@
     <div class="container">
       <div class="row">
         <div class="col-12 center img">
-          <img class="center" src="./mfiles/data_processing.jpeg" style="width:100%"></img>
+          <picture>
+            <source type="image/avif" srcset="./mfiles/data_processing.avif" style="width:100%">
+            <img class="center" src="./mfiles/data_processing.jpeg" style="width:100%"></img>
+          </picture>
           <p>
             We collect our real world data using an <strong>iPhone 13 Pro</strong>, whose LiDAR scanner gives us RGB-D
             and odometry
@@ -296,7 +299,10 @@
     <div class="container">
       <div class="row">
         <div class="col-12 center img">
-          <img class="center" src="./mfiles/arch.jpeg" style="width:100%"></img>
+          <picture>
+            <source type="image/avif" srcset="./mfiles/arch.avif" style="width:100%">
+            <img class="center" src="./mfiles/arch.jpeg" style="width:100%"></img>
+          </picture>
           <p>
             Our model is an implicit function that maps each 3-dimensional spatial location to a higher dimensional
             representation vector. Each of the vectors contain both the language-based and vision-based semantic
@@ -333,7 +339,10 @@
       <div class="row">
         <div class="col-12">
           <h2 class="center m-bottom">Experiments</h2>
-          <img class="center" src="./mfiles/query_navigation.jpg" style="width:100%"></img>
+          <picture>
+            <source type="image/avif" srcset="./mfiles/query_navigation.avif" style="width:100%">
+            <img class="center" src="./mfiles/query_navigation.jpg" style="width:100%"></img>
+          </picture>
           <p>
             On our robot, we load the CLIP-Field to help with the localization and navigation of the robot.
             When the robot gets a new text query, we first convert it to a representation vector by encoding it with
