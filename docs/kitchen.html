@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>three.js webgl - PCD</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+
+            background: #eee6f3;
+            /* Old browsers */
+            background: -moz-linear-gradient(top, #eee6f3 0%, #57068c 100%);
+            /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, #eee6f3 0%, #57068c 100%);
+            /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, #eee6f3 0%, #57068c 100%);
+            /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eee6f3', endColorstr='#57068c', GradientType=0);
+            /* IE6-9 */
+            overflow: hidden;
+
+        }
+
+        #loading-screen {
+            position: absolute;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            opacity: 1;
+            transition: 1s opacity;
+        }
+
+        #loading-screen.fade-out {
+            opacity: 0;
+        }
+
+        #load-button {
+            position: absolute;
+            z-index: 3;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 50px;
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 1s opacity;
+        }
+
+        .toggle-button {
+            z-index: 3;
+            height: 50px;
+            padding: 0em 1em;
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 1s opacity;
+        }
+
+        .toggle-button:disabled {
+            z-index: 3;
+            height: 50px;
+            padding: 0em 1em;
+            background-color: #999999;
+            color: #ffffff;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 1s opacity;
+
+        }
+
+        #loader {
+            display: block;
+            position: relative;
+            left: 50%;
+            top: 50%;
+            width: 150px;
+            height: 150px;
+            margin: -75px 0 0 -75px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #9370DB;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+        }
+
+        #loader:before {
+            content: "";
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #BA55D3;
+            -webkit-animation: spin 3s linear infinite;
+            animation: spin 3s linear infinite;
+        }
+
+        #loader:after {
+            content: "";
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #FF00FF;
+            -webkit-animation: spin 1.5s linear infinite;
+            animation: spin 1.5s linear infinite;
+        }
+
+        @-webkit-keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                -ms-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                -ms-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+                -ms-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                -ms-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <section id="loading-screen">
+        <button id="load-button">Click to load</button>
+        <div id="loader" style="display: none;"></div>
+    </section>
+    <section id="toggle-buttons">
+        <button id="toggle-trash" class="toggle-button" disabled>"Throw out my trash"</button>
+        <button id="toggle-microwave" class="toggle-button" disabled>"Warm up my lunch"</button>
+        <button id="toggle-coffee" class="toggle-button" disabled>"Make me a coffee"</button>
+        <button id="toggle-bottle" class="toggle-button" disabled>"Fill out my water bottle"</button>
+    </section>
+    <!-- Import maps polyfill -->
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.145.0/build/three.module.js"
+          }
+        }
+      </script>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.145.0/build/three.module.js';
+        import { OrbitControls } from 'https://unpkg.com/three@0.145.0/examples/jsm/controls/OrbitControls.js';
+        import { PCDLoader } from 'https://unpkg.com/three@0.145.0/examples/jsm/loaders/PCDLoader.js';
+
+        let camera, scene, renderer;
+        var sceneLoaded, trash, microwave, coffee;
+        var sceneLoaded = false;
+        var trashLoaded = false;
+        var microwaveLoaded = false;
+        var coffeeLoaded = false;
+        var bottleLoaded = false;
+        var trashVisible = false;
+        var microwaveVisible = false;
+        var coffeeVisible = false;
+        var bottleVisible = false;
+        var sceneVisible = false;
+
+        const loadingManager = new THREE.LoadingManager(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.classList.add('fade-out');
+            loadingScreen.addEventListener('transitionend', onTransitionEnd);
+        });
+        const loadButton = document.getElementById('load-button');
+        const loader = new PCDLoader(loadingManager);
+        loadButton.addEventListener('click', startLoading);
+
+        const loadTrash = document.getElementById('toggle-trash');
+        loadTrash.addEventListener('click', startLoadingTrash);
+
+        const loadMicrowave = document.getElementById('toggle-microwave');
+        loadMicrowave.addEventListener('click', startLoadingMicrowave);
+
+        const loadCoffee = document.getElementById('toggle-coffee');
+        loadCoffee.addEventListener('click', startLoadingCoffee);
+
+        const loadBottle = document.getElementById('toggle-bottle');
+        loadBottle.addEventListener('click', startLoadingBottle);
+
+        function startLoading() {
+            document.getElementById('loader').style.display = 'block';
+            initFull();
+            render();
+            sceneVisible = true;
+        }
+
+        function startLoadingTrash() {
+            if (trashLoaded == false) {
+                initByName('./mfiles/nyu_kitchen_throw_my_trash.pcd', 'trash.pcd');
+                render();
+                trashLoaded = true;
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = false;
+                const microwavePoints = scene.getObjectByName('microwave.pcd');
+                if (microwavePoints) {
+                    microwavePoints.visible = false;
+                }
+                const coffeePoints = scene.getObjectByName('coffee.pcd');
+                if (coffeePoints) {
+                    coffeePoints.visible = false;
+                }
+                const bottlePoints = scene.getObjectByName('bottle.pcd');
+                if (bottlePoints) {
+                    bottlePoints.visible = false;
+                }
+            } else {
+                const trashPoints = scene.getObjectByName('trash.pcd');
+                trashPoints.visible = !trashPoints.visible;
+                if (trashPoints.visible) {
+                    const microwavePoints = scene.getObjectByName('microwave.pcd');
+                    if (microwavePoints) {
+                        microwavePoints.visible = !trashPoints.visible;
+                    }
+                    const coffeePoints = scene.getObjectByName('coffee.pcd');
+                    if (coffeePoints) {
+                        coffeePoints.visible = !trashPoints.visible;
+                    }
+                    const bottlePoints = scene.getObjectByName('bottle.pcd');
+                    if (bottlePoints) {
+                        bottlePoints.visible = !trashPoints.visible;
+                    }
+                }
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = !trashPoints.visible;
+                render();
+            }
+        }
+
+        function startLoadingMicrowave() {
+            if (microwaveLoaded === false) {
+                initByName('./mfiles/model_nyu_kitchen_warm_up_my_lunch.pcd', 'microwave.pcd');
+                render();
+                microwaveLoaded = true;
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = false;
+                const trashPoints = scene.getObjectByName('trash.pcd');
+                if (trashPoints) {
+                    trashPoints.visible = false;
+                }
+                const coffeePoints = scene.getObjectByName('coffee.pcd');
+                if (coffeePoints) {
+                    coffeePoints.visible = false;
+                }
+                const bottlePoints = scene.getObjectByName('bottle.pcd');
+                if (bottlePoints) {
+                    bottlePoints.visible = false;
+                }
+            } else {
+                const microwavePoints = scene.getObjectByName('microwave.pcd');
+                microwavePoints.visible = !microwavePoints.visible;
+                if (microwavePoints.visible) {
+                    const trashPoints = scene.getObjectByName('trash.pcd');
+                    if (trashPoints) {
+                        trashPoints.visible = !microwavePoints.visible;
+                    }
+                    const coffeePoints = scene.getObjectByName('coffee.pcd');
+                    if (coffeePoints) {
+                        coffeePoints.visible = !microwavePoints.visible;
+                    }
+                    const bottlePoints = scene.getObjectByName('bottle.pcd');
+                    if (bottlePoints) {
+                        bottlePoints.visible = !microwavePoints.visible;
+                    }
+                }
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = !microwavePoints.visible;
+                render();
+            }
+        }
+
+
+        function startLoadingCoffee() {
+            if (coffeeLoaded === false) {
+                initByName('./mfiles/model_nyu_kitchen_make_some_coffee.pcd', 'coffee.pcd');
+                render();
+                coffeeLoaded = true;
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = false;
+                const trashPoints = scene.getObjectByName('trash.pcd');
+                if (trashPoints) {
+                    trashPoints.visible = false;
+                }
+                const microwavePoints = scene.getObjectByName('microwave.pcd');
+                if (microwavePoints) {
+                    microwavePoints.visible = false;
+                }
+                const bottlePoints = scene.getObjectByName('bottle.pcd');
+                if (bottlePoints) {
+                    bottlePoints.visible = false;
+                }
+            } else {
+                const coffeePoints = scene.getObjectByName('coffee.pcd');
+                coffeePoints.visible = !coffeePoints.visible;
+                if (coffeePoints.visible) {
+                    const trashPoints = scene.getObjectByName('trash.pcd');
+                    if (trashPoints) {
+                        trashPoints.visible = !coffeePoints.visible;
+                    }
+                    const microwavePoints = scene.getObjectByName('microwave.pcd');
+                    if (microwavePoints) {
+                        microwavePoints.visible = !coffeePoints.visible;
+                    }
+                    const bottlePoints = scene.getObjectByName('bottle.pcd');
+                    if (bottlePoints) {
+                        bottlePoints.visible = !coffeePoints.visible;
+                    }
+                }
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = !coffeePoints.visible;
+                render();
+            }
+        }
+
+
+        function startLoadingBottle() {
+            if (bottleLoaded === false) {
+                initByName('./mfiles/model_nyu_kitchen_fill_out_water_bottle.pcd', 'bottle.pcd');
+                render();
+                bottleLoaded = true;
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = false;
+                const trashPoints = scene.getObjectByName('trash.pcd');
+                if (trashPoints) {
+                    trashPoints.visible = false;
+                }
+                const microwavePoints = scene.getObjectByName('microwave.pcd');
+                if (microwavePoints) {
+                    microwavePoints.visible = false;
+                }
+                const coffeePoints = scene.getObjectByName('coffee.pcd');
+                if (coffeePoints) {
+                    coffeePoints.visible = false;
+                }
+            } else {
+                const bottlePoints = scene.getObjectByName('bottle.pcd');
+                bottlePoints.visible = !bottlePoints.visible;
+                if (bottlePoints.visible) {
+                    const trashPoints = scene.getObjectByName('trash.pcd');
+                    if (trashPoints) {
+                        trashPoints.visible = !bottlePoints.visible;
+                    }
+                    const microwavePoints = scene.getObjectByName('microwave.pcd');
+                    if (microwavePoints) {
+                        microwavePoints.visible = !bottlePoints.visible;
+                    }
+                    const coffeePoints = scene.getObjectByName('coffee.pcd');
+                    if (coffeePoints) {
+                        coffeePoints.visible = !bottlePoints.visible;
+                    }
+                }
+                const points = scene.getObjectByName('kitchen.pcd');
+                points.visible = !bottlePoints.visible;
+                render();
+            }
+        }
+
+        function initFull() {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0.0);
+            document.body.appendChild(renderer.domElement);
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 40);
+            camera.position.set(0, -1, 10);
+            scene.add(camera);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.addEventListener('change', render); // use if there is no animation loop
+            controls.minDistance = 3;
+            controls.maxDistance = 20;
+
+            scene.add(new THREE.AxesHelper(1));
+
+            loader.load('./mfiles/kitchen_1cm.pcd', function (points) {
+                points.geometry.center();
+                points.geometry.rotateY(Math.PI);
+                points.material.size = 0.05;
+                points.name = 'kitchen.pcd';
+                scene.add(points);
+                render();
+                Array.from(document.getElementsByClassName("toggle-button")).forEach(element => {
+                    element.disabled = false;
+                });
+            },
+                function (xhr) {
+                    document.getElementById('load-button').innerHTML = (xhr.loaded / xhr.total * 100).toFixed(2) + '%';
+                }
+            );
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keypress', keyboard);
+            render();
+        }
+
+        function initByName(filename, fileid) {
+            document.getElementById('loader').style.display = "block";
+            document.getElementById('loading-screen').style.opacity = 1;
+            loader.load(filename, function (points) {
+                points.geometry.center();
+                points.geometry.rotateY(Math.PI);
+                points.material.size = 0.05;
+                points.name = fileid;
+                scene.add(points);
+                render();
+            },
+                function (xhr) {
+                    // document.getElementById('load-button').innerHTML = (xhr.loaded / xhr.total * 100).toFixed(2) + '%';
+                },
+                function (error) {
+                    console.log(error);
+                }
+            );
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keypress', keyboard);
+
+            render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onTransitionEnd(event) {
+            event.target.style.display = "none";
+        }
+        function keyboard(ev) {
+            const points = scene.getObjectByName('kitchen.pcd');
+            switch (ev.key || String.fromCharCode(ev.keyCode || ev.charCode)) {
+                case '+':
+                    points.material.size *= 1.2;
+                    console.log(points.material.size);
+                    break;
+
+                case '-':
+                    points.material.size /= 1.2;
+                    break;
+
+                case 'c':
+                    points.material.color.setHex(Math.random() * 0xffffff);
+                    break;
+            }
+            render();
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+    </script>
+</body>
+
+</html>

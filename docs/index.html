@@ -20,67 +20,67 @@
   <link rel="shortcut icon" href="img/favicon.png">
   <link rel="stylesheet" href="css/simple-grid.css">
   <title>CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</title>
-     <script>
-      function retime(duration, class_name) {
-        var videos = document.getElementsByClassName(class_name);
-        for (var i = 0; i < videos.length; i++) {
-          var video = videos[i];
-          video.onloadeddata = function () {
-            this.playbackRate = this.duration / duration;
-          };
+  <script>
+    function retime(duration, class_name) {
+      var videos = document.getElementsByClassName(class_name);
+      for (var i = 0; i < videos.length; i++) {
+        var video = videos[i];
+        video.onloadeddata = function () {
+          this.playbackRate = this.duration / duration;
+        };
+      }
+    }
+
+    function monitor(replay_name) {
+      var div = document.getElementById(replay_name);
+      div.style.opacity = 1.0;
+    }
+
+    function replay(class_name, replay_name) {
+      var video = document.getElementById(class_name);
+      video.currentTime = 0;
+      video.play();
+      var div = document.getElementById(replay_name);
+      div.style.opacity = 0.0;
+    }
+
+    function seek(class_id, progress_id, time, endtime) {
+      var video = document.getElementById(class_id);
+      var progress = document.getElementById(progress_id);
+      video.currentTime = time;
+      video.supposedEndTime = endtime;
+      video.supposedStartTime = time;
+      progress.style.transitionDuration = "0s";
+      progress.value = Math.round((video.currentTime / video.duration) * 100);
+      progress.style.transitionDuration = "0.5s";
+      video.addEventListener("timeupdate", function (event) {
+        target = event.target;
+        if (target.currentTime >= target.supposedEndTime) {
+          target.currentTime = target.supposedStartTime; // change time index here
         }
-      }
+      }, false);
+    }
 
-      function monitor(replay_name) {
-        var div = document.getElementById(replay_name);
-        div.style.opacity = 1.0;
-      }
-
-      function replay(class_name, replay_name) {
-        var video = document.getElementById(class_name);
-        video.currentTime = 0;
-        video.play();
-        var div = document.getElementById(replay_name);
-        div.style.opacity = 0.0;
-      }
-
-      function seek(class_id, progress_id, time, endtime) {
-        var video = document.getElementById(class_id);
-        var progress = document.getElementById(progress_id);
-        video.currentTime = time;
-        video.supposedEndTime = endtime;
-        video.supposedStartTime = time;
-        progress.style.transitionDuration = "0s";
-        progress.value = Math.round((video.currentTime / video.duration) * 100);
-        progress.style.transitionDuration = "0.5s";
-        video.addEventListener("timeupdate", function (event) {
-          target = event.target;
-          if (target.currentTime >= target.supposedEndTime) {
-            target.currentTime = target.supposedStartTime; // change time index here
-          }
-        }, false);
-      }
-
-      function progressLoop(video_class_id, progress_id) {
-        var video = document.getElementById(video_class_id);
-        var progress = document.getElementById(progress_id);
-        console.log(video.currentTime / video.duration);
-        function innerLoop() {
-          if (video !== null && (video.currentTime / video.duration)) {
-            progress.value = Math.round((video.currentTime / video.duration) * 100);
-          }
-          window.requestAnimationFrame(innerLoop);
+    function progressLoop(video_class_id, progress_id) {
+      var video = document.getElementById(video_class_id);
+      var progress = document.getElementById(progress_id);
+      console.log(video.currentTime / video.duration);
+      function innerLoop() {
+        if (video !== null && (video.currentTime / video.duration)) {
+          progress.value = Math.round((video.currentTime / video.duration) * 100);
         }
-        innerLoop();
+        window.requestAnimationFrame(innerLoop);
       }
-    </script>
-    <style>
-      .replay {
-        font-size: 1.5em;
-        color: #00A2FF;
-        text-decoration: none;
-      }
-    </style>
+      innerLoop();
+    }
+  </script>
+  <style>
+    .replay {
+      font-size: 1.5em;
+      color: #00A2FF;
+      text-decoration: none;
+    }
+  </style>
 </head>
 
 <body>
@@ -162,6 +162,16 @@
       </div>
     </div>
     <!--Videos-->
+
+    <div class="container">
+      <div class="row">
+        <div class="col-12" style="width: 100%">
+
+          <h2 class="center m-bottom">Interactive demonstration</h2>
+          <iframe src="kitchen.html" title="NYU Kitchen interactive demo" width="100%" height="720px"></iframe>
+        </div>
+      </div>
+    </div>
     <div class="container">
       <div class="row">
         <div class="col-12" style="width: 100%">
@@ -222,12 +232,16 @@
           <h2 class="center m-bottom">Method</h2>
           <p>CLIP-Fields is based off of a simple idea:
           <ul style="font-size: 1.125rem;font-weight: 200;line-height: 1.8">
-            <li>Webscale models like CLIP and Detic provide lots of semantic information about objects that can be used for robot tasks, but don't encode spatial qualities of this information.
+            <li>Webscale models like CLIP and Detic provide lots of semantic information about objects that can be used
+              for robot tasks, but don't encode spatial qualities of this information.
             </li>
-            <li>NeRF-like approaches, on the other hand, have recently shown that they can capture very detailed scene information.
-	    </li>
-            <li>We can combine these two, using a novel contrastive loss in order to capture scene-specific embeddings. We supervise multiple "heads," including object detection and CLIP, based on these webscale vision models, which allows us to do open-vocabulary queries at test time.
-	    </li>
+            <li>NeRF-like approaches, on the other hand, have recently shown that they can capture very detailed scene
+              information.
+            </li>
+            <li>We can combine these two, using a novel contrastive loss in order to capture scene-specific embeddings.
+              We supervise multiple "heads," including object detection and CLIP, based on these webscale vision models,
+              which allows us to do open-vocabulary queries at test time.
+            </li>
           </ul>
           </p>
         </div>
