@@ -6,7 +6,7 @@ project: clip_field
 deterministic_id: false
 device: cuda
 use_cache: false
-point_batch_size: 12544
+batch_size: 12544
 
 # Dataset details
 dataset_path: nyu.r3d
@@ -82,3 +82,102 @@ hydra:
     array_parallelism: 256
     setup: null
     partition: learnfair
+
+# Add any custom labels you want here
+custom_labels:
+  - kitchen counter
+  - kitchen cabinet
+  - stove
+  - cabinet
+  - bathroom counter
+  - refrigerator
+  - microwave
+  - oven
+  - fireplace
+  - door
+  - sink
+  - furniture
+  - dish rack
+  - dining table
+  - shelf
+  - bar
+  - dishwasher
+  - toaster oven
+  - toaster
+  - mini fridge
+  - soap dish
+  - coffee maker
+  - table
+  - bowl
+  - rack
+  - bulletin board
+  - water cooler
+  - coffee kettle
+  - lamp
+  - plate
+  - window
+  - dustpan
+  - trash bin
+  - ceiling
+  - doorframe
+  - trash can
+  - basket
+  - wall
+  - bottle
+  - broom
+  - bin
+  - paper
+  - storage container
+  - box
+  - tray
+  - whiteboard
+  - decoration
+  - board
+  - cup
+  - windowsill
+  - potted plant
+  - light
+  - machine
+  - fire extinguisher
+  - bag
+  - paper towel roll
+  - chair
+  - book
+  - fire alarm
+  - blinds
+  - crate
+  - tissue box
+  - towel
+  - paper bag
+  - column
+  - fan
+  - object
+  - range hood
+  - plant
+  - structure
+  - poster
+  - mat
+  - water bottle
+  - power outlet
+  - storage bin
+  - radiator
+  - picture
+  - water pitcher
+  - pillar
+  - light switch
+  - bucket
+  - storage organizer
+  - vent
+  - counter
+  - ceiling light
+  - case of water bottles
+  - pipe
+  - scale
+  - recycling bin
+  - clock
+  - sign
+  - folded chair
+  - power strip
+
+# Or just comment it out for SCANNET 200 labels.
+# custom_labels: null

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from zipfile import ZipFile
 
 import liblzfse
@@ -18,12 +18,17 @@ class R3DSemanticDataset(Dataset):
     def __init__(
         self,
         path: str,
-        custom_classes: List[str] = CLASS_LABELS_200,
+        custom_classes: Optional[List[str]] = CLASS_LABELS_200,
     ):
         if path.endswith((".zip", ".r3d")):
             self._path = ZipFile(path)
         else:
             self._path = Path(path)
+
+        if custom_classes:
+            self._classes = custom_classes
+        else:
+            self._classes = CLASS_LABELS_200
 
         self._reshaped_depth = []
         self._reshaped_conf = []
@@ -31,14 +36,14 @@ class R3DSemanticDataset(Dataset):
         self._rgb_images = []
         self._confidences = []
 
-        self._metadata = self._read_metadata(custom_classes)
+        self._metadata = self._read_metadata()
         self.global_xyzs = []
         self.global_pcds = []
         self._load_data()
         self._reshape_all_depth_and_conf()
         self.calculate_all_global_xyzs()
 
-    def _read_metadata(self, custom_classes):
+    def _read_metadata(self):
         with self._path.open("metadata", "r") as f:
             metadata_dict = json.load(f)
 
@@ -53,7 +58,7 @@ class R3DSemanticDataset(Dataset):
         self.init_pose = np.array(metadata_dict["initPose"])
         self.total_images = len(self.poses)
 
-        self._id_to_name = {i: x for (i, x) in enumerate(custom_classes)}
+        self._id_to_name = {i: x for (i, x) in enumerate(self._classes)}
 
     def load_image(self, filepath):
         with self._path.open(filepath, "r") as image_file:

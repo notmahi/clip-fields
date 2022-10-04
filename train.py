@@ -1,5 +1,6 @@
 import logging
 import os
+import pprint
 import random
 from typing import Dict, Union
 
@@ -13,9 +14,11 @@ from omegaconf import OmegaConf
 from torch.utils.data import DataLoader, RandomSampler, Subset
 
 import wandb
-from dataloaders.r3d import R3DSemanticDataset
-from dataloaders.open_classification import ClassificationExtractor
-from dataloaders.real_dataset import DeticDenseLabelledDataset
+from dataloaders import (
+    R3DSemanticDataset,
+    DeticDenseLabelledDataset,
+    ClassificationExtractor,
+)
 from misc import ImplicitDataparallel
 from grid_hash_model import GridCLIPModel
 
@@ -59,7 +62,6 @@ def train(
     label_loss = 0
     image_loss = 0
     classification_loss = 0
-    total_inst_segmentation_loss = 0
     total_samples = 0
     total_classification_loss = 0
     labelling_model.train()
@@ -146,8 +148,7 @@ def train(
         )
 
         optim.zero_grad(set_to_none=True)
-        final_loss = contrastive_loss
-        final_loss.backward()
+        contrastive_loss.backward()
         optim.step()
         # Clip the temperature term for stability
         labelling_model.temperature.data = torch.clamp(
@@ -156,13 +157,12 @@ def train(
         label_loss += contrastive_loss_labels.detach().cpu().item()
         image_loss += contrastive_loss_images.detach().cpu().item()
         total_classification_loss += classification_loss.detach().cpu().item()
-        total_loss += final_loss.detach().cpu().item()
+        total_loss += contrastive_loss.detach().cpu().item()
         total_samples += 1
 
     to_log = {
         "train_avg/contrastive_loss_labels": label_loss / total_samples,
         "train_avg/contrastive_loss_images": image_loss / total_samples,
-        "train_avg/instance_loss": total_inst_segmentation_loss / total_samples,
         "train_avg/semseg_loss": total_classification_loss / total_samples,
         "train_avg/loss_sum": total_loss / total_samples,
         "train_avg/labelling_temp": torch.exp(labelling_model.temperature.data.detach())
@@ -179,7 +179,7 @@ def train(
                 to_log[f"train_avg/{metric_name}"] = 0.0
             metric.reset()
     wandb.log(to_log)
-    logger.debug(to_log)
+    logger.debug(pprint.pformat(to_log, indent=4, width=1))
     return total_loss
 
 
@@ -210,7 +210,7 @@ def get_real_dataset(cfg):
     if cfg.use_cache:
         location_train_dataset = torch.load(cfg.saved_dataset_path)
     else:
-        view_dataset = R3DSemanticDataset(cfg.dataset_path)
+        view_dataset = R3DSemanticDataset(cfg.dataset_path, cfg.custom_labels)
         if cfg.sample_freq != 1:
             view_dataset = Subset(
                 view_dataset,
@@ -267,25 +267,19 @@ def main(cfg):
                     f"{classes}_{metric_name}_{avg}"
                 ] = new_metric
 
-    epoch_size = int(cfg.epoch_size)
-
     if torch.cuda.device_count() > 1 and cfg.dataparallel:
         batch_multiplier = torch.cuda.device_count()
     else:
         batch_multiplier = 1
-    label_sampler = RandomSampler(
-        data_source=real_dataset, num_samples=epoch_size, replacement=True
-    )
+
     clip_train_loader = DataLoader(
         real_dataset,
-        batch_size=batch_multiplier * cfg.point_batch_size,
-        sampler=label_sampler,
+        batch_size=batch_multiplier * cfg.batch_size,
+        shuffle=True,
         pin_memory=True,
         num_workers=cfg.num_workers,
     )
-
     logger.debug(f"Total train dataset sizes: {len(real_dataset)}")
-    logger.debug(f"Epochs for one pass over dataset: {len(real_dataset) // epoch_size}")
 
     labelling_model = GridCLIPModel(
         image_rep_size=real_dataset[0]["clip_image_vector"].shape[-1],

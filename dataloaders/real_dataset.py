@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
-from dataloaders.r3d import R3DSemanticDataset
+from dataloaders.record3d import R3DSemanticDataset
 from dataloaders.scannet_200_classes import SCANNET_COLOR_MAP_200, CLASS_LABELS_200
 
 

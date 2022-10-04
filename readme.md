@@ -42,7 +42,7 @@ If you want to use LSeg as an additional source of open-label annotations, you s
 python train.py dataset_path=nyu.r3d use_lseg=true
 ```
 
-You can check out the `config/train.yaml` for a list of possible configuration options.
+You can check out the `config/train.yaml` for a list of possible configuration options. In particular, if you want to train with any particular set of labels, you can specify them in the `custom_labels` field in `config/train.yaml`.
 
 ## Evaluation
 
