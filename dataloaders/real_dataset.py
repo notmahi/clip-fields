@@ -411,10 +411,6 @@ class DeticDenseLabelledDataset(Dataset):
             torch.ones_like(self._text_ids) * -1
         ).long()  # We don't have instance ID from this dataset.
 
-        # self._resample()
-
-        print(len(self._label_xyz))
-
     def _resample(self):
         resampled_indices = torch.rand(len(self._label_xyz)) < self._subsample_prob
         logging.info(
@@ -538,33 +534,40 @@ class DeticDenseLabelledDataset(Dataset):
 
         # We will try to classify all the classes, but will use LSeg labels for classes that
         # are not identified by Detic.
-        self.module = LSegModule.load_from_checkpoint(
-            checkpoint_path=f"{LSEG_PATH}/checkpoints/demo_e200.ckpt",
-            data_path="",
-            dataset="ade20k",
-            backbone="clip_vitl16_384",
-            aux=False,
-            num_features=256,
-            aux_weight=0,
-            se_loss=False,
-            se_weight=0,
-            base_lr=0,
-            batch_size=1,
-            max_epochs=0,
-            ignore_index=255,
-            dropout=0.0,
-            scale_inv=False,
-            augment=False,
-            no_batchnorm=False,
-            widehead=True,
-            widehead_hr=False,
-            map_locatin=self._device,
-            arch_option=0,
-            block_depth=0,
-            activation="lrelu",
-        )
-
-        # model
+        LSEG_MODEL_PATH = f"{LSEG_PATH}/checkpoints/demo_e200.ckpt"
+        try:
+            self.module = LSegModule.load_from_checkpoint(
+                checkpoint_path=LSEG_MODEL_PATH,
+                data_path="",
+                dataset="ade20k",
+                backbone="clip_vitl16_384",
+                aux=False,
+                num_features=256,
+                aux_weight=0,
+                se_loss=False,
+                se_weight=0,
+                base_lr=0,
+                batch_size=1,
+                max_epochs=0,
+                ignore_index=255,
+                dropout=0.0,
+                scale_inv=False,
+                augment=False,
+                no_batchnorm=False,
+                widehead=True,
+                widehead_hr=False,
+                map_locatin=self._device,
+                arch_option=0,
+                block_depth=0,
+                activation="lrelu",
+            )
+        except FileNotFoundError:
+            LSEG_URL = "https://github.com/isl-org/lang-seg"
+            raise FileNotFoundError(
+                "LSeg model not found. Please download it from {} and place it in {}".format(
+                    LSEG_URL, LSEG_MODEL_PATH
+                )
+            )
         if isinstance(self.module.net, BaseNet):
             model = self.module.net
         else:

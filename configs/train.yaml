@@ -2,7 +2,7 @@ defaults:
   - _self_
   - override hydra/launcher: submitit_slurm
 
-project: grid_lf_gt_only
+project: clip_field
 deterministic_id: false
 device: cuda
 use_cache: false
@@ -10,6 +10,7 @@ point_batch_size: 12544
 
 # Dataset details
 dataset_path: nyu.r3d
+cache_result: true
 cache_path: detic_labeled_dataset.pt
 saved_dataset_path: detic_labeled_dataset.pt
 
@@ -17,7 +18,7 @@ saved_dataset_path: detic_labeled_dataset.pt
 sample_freq: 5
 detic_threshold: 0.4
 subsample_prob: 0.2
-use_lseg: true
+use_lseg: false
 use_extra_classes: false
 use_gt_classes_in_detic: true
 

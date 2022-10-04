@@ -27,3 +27,5 @@ numpy==1.21.4
 einops==0.4.1
 pytorch-lightning==1.3.5
 pyquaternion==0.9.9
+pyliblzfse==0.4.1
+open3d==0.15.2

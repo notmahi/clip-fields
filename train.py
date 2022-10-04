@@ -315,7 +315,7 @@ def main(cfg):
     labelling_model = labelling_model.to(cfg.device)
 
     run_id = wandb.util.generate_id()
-    save_directory = cfg.save_directory_real + f"/{run_id}"
+    save_directory = cfg.save_directory + f"/{run_id}"
     loaded = False
     if os.path.exists("{}/".format(save_directory)):
         # First find out which epoch is the latest one.
