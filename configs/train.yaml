@@ -1,0 +1,83 @@
+defaults:
+  - _self_
+  - override hydra/launcher: submitit_slurm
+
+project: grid_lf_gt_only
+deterministic_id: false
+device: cuda
+use_cache: false
+point_batch_size: 12544
+
+# Dataset details
+dataset_path: nyu.r3d
+cache_path: detic_labeled_dataset.pt
+saved_dataset_path: detic_labeled_dataset.pt
+
+# Data loading and labelling specs
+sample_freq: 5
+detic_threshold: 0.4
+subsample_prob: 0.2
+use_lseg: true
+use_extra_classes: false
+use_gt_classes_in_detic: true
+
+# Neural field specs
+model_type: hash
+num_grid_levels: 18
+level_dim: 8  # So total dimension 144
+per_level_scale: 2
+mlp_depth: 1
+mlp_width: 600
+log2_hashmap_size: 20
+
+# Training specs
+seed: 42
+epochs: 100
+exp_decay_coeff: 0.5
+image_to_label_loss_ratio: 1.0
+label_to_image_loss_ratio: 1.0
+instance_loss_scale: 100.0
+epoch_size: 3e6
+dataparallel: false
+num_workers: 10
+
+# Debug purposes, visualize Detic results
+visualize_detic_results: false
+detic_visualization_path: "detic_debug"
+
+# Cache only runs are for building per-dataset caches, which can be used for multi-run later.
+cache_only_run: false
+
+# Learning rate data
+lr: 1e-4
+weight_decay: 0.003
+betas:
+  - 0.9
+  - 0.999
+
+save_directory: "clip_implicit_model"
+
+web_models:
+  clip: "ViT-B/32"
+  sentence: "all-mpnet-base-v2"
+
+hydra:
+  callbacks:
+    log_job_return:
+      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+
+  launcher:
+    timeout_min: 180
+    cpus_per_task: 10
+    gpus_per_node: 1
+    tasks_per_node: 1
+    mem_gb: 128
+    nodes: 1
+    name: ${hydra.job.name}
+    _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+    signal_delay_s: 120
+    max_num_timeout: 1
+    additional_parameters: {}
+    array_parallelism: 256
+    setup: null
+    partition: learnfair
