@@ -36,4 +36,21 @@ Once you have the dependencies installed, you can run the training script `train
 python train.py dataset_path=nyu.r3d
 ```
 
+If you want to use LSeg as an additional source of open-label annotations, you should download the [LSeg demo model](https://github.com/isl-org/lang-seg#-try-demo-now) and place it in the `path_to_LSeg/checkpoints/demo_e200.ckpt`. Then, you can run the following command.
+
+```
+python train.py dataset_path=nyu.r3d use_lseg=true
+```
+
+You can check out the `config/train.yaml` for a list of possible configuration options.
+
 ## Evaluation
+
+
+## Acknowledgements
+We would like to thank the following projects for making their code and models available, which we relied upon heavily in this work.
+* [CLIP](https://github.com/openai/CLIP) with [MIT License](https://github.com/openai/CLIP/blob/main/LICENSE)
+* [Detic](https://github.com/facebookresearch/Detic/) with [Apache License 2.0](https://github.com/facebookresearch/Detic/blob/main/LICENSE)
+* [Torch NGP](https://github.com/ashawkey/torch-ngp) with [MIT License](https://github.com/ashawkey/torch-ngp/blob/main/LICENSE)
+* [LSeg](https://github.com/isl-org/lang-seg) with [MIT License](https://github.com/isl-org/lang-seg/blob/main/LICENSE)
+* [Sentence BERT](https://www.sbert.net/) with [Apache License 2.0](https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE)

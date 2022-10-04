@@ -13,13 +13,15 @@ from torch.utils.data import Dataset, DataLoader
 from dataloaders.r3d import R3DSemanticDataset
 from dataloaders.scannet_200_classes import SCANNET_COLOR_MAP_200, CLASS_LABELS_200
 
-# Some basic setup:
+
 # Setup detectron2 logger
 from detectron2.utils.logger import setup_logger
 from sentence_transformers import SentenceTransformer
 from torch.utils.data import Dataset
 
 setup_logger()
+d2_logger = logging.getLogger("detectron2")
+d2_logger.setLevel(level=logging.WARNING)
 
 # import some common libraries
 import sys
@@ -63,25 +65,6 @@ cfg.MODEL.ROI_BOX_HEAD.CAT_FREQ_PATH = (
     f"{DETIC_PATH}/datasets/metadata/lvis_v1_train_cat_info.json"
 )
 # cfg.MODEL.DEVICE='cpu' # uncomment this to use cpu-only mode.
-
-# Setup the model's vocabulary using build-in datasets
-
-BUILDIN_CLASSIFIER = {
-    "lvis": f"{DETIC_PATH}/datasets/metadata/lvis_v1_clip_a+cname.npy",
-    "objects365": f"{DETIC_PATH}/datasets/metadata/o365_clip_a+cnamefix.npy",
-    "openimages": f"{DETIC_PATH}/datasets/metadata/oid_clip_a+cname.npy",
-    "coco": f"{DETIC_PATH}/datasets/metadata/coco_clip_a+cname.npy",
-}
-
-BUILDIN_METADATA_PATH = {
-    "lvis": "lvis_v1_val",
-    "objects365": "objects365_v2_val",
-    "openimages": "oid_val_expanded",
-    "coco": "coco_2017_val",
-}
-
-vocabulary = "lvis"  # change to 'lvis', 'objects365', 'openimages', or 'coco'
-metadata = MetadataCatalog.get(BUILDIN_METADATA_PATH[vocabulary])
 
 
 def get_clip_embeddings(vocabulary, prompt="a "):
@@ -154,7 +137,6 @@ class DeticDenseLabelledDataset(Dataset):
         use_scannet_colors: bool = True,
     ):
         dataset = view_dataset
-
         view_data = (
             view_dataset.dataset
             if isinstance(view_dataset, torch.utils.data.Subset)
@@ -179,7 +161,6 @@ class DeticDenseLabelledDataset(Dataset):
         self._distance = []
 
         self._exclude_gt_image = exclude_gt_images
-        # Now, set up all the points and their labels.
         images_to_label = self.get_best_sem_segmented_images(
             dataset, num_images_to_label, gt_inst_images, gt_sem_images
         )
@@ -198,6 +179,9 @@ class DeticDenseLabelledDataset(Dataset):
         self._setup_detic_dense_labels(
             dataset, images_to_label, clip_model, sentence_model
         )
+
+        del clip_model
+        del sentence_model
 
     def get_best_sem_segmented_images(
         self,

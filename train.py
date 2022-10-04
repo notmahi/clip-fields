@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import random
@@ -22,17 +21,17 @@ from grid_hash_model import GridCLIPModel
 
 
 SAVE_DIRECTORY = "clip_implicit_model"
-# Create model using a simple MLP and a Fourier projection.
-# This model should really tell you the probability of something being a surface point or not.
 DEVICE = "cuda"
 IMAGE_TO_LABEL_CLIP_LOSS_SCALE = 1.0
 LABEL_TO_IMAGE_LOSS_SCALE = 1.0
 EXP_DECAY_COEFF = 0.5
 SAVE_EVERY = 5
-# Set up the desired metrics.
 METRICS = {
     "accuracy": torchmetrics.Accuracy,
 }
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def seed_everything(seed: int):
@@ -47,6 +46,7 @@ def train(
     clip_train_loader: DataLoader,
     labelling_model: GridCLIPModel,
     optim: torch.optim.Optimizer,
+    epoch: int,
     classifier: ClassificationExtractor,
     device: Union[str, torch.device] = DEVICE,
     exp_decay_coeff: float = EXP_DECAY_COEFF,
@@ -65,11 +65,11 @@ def train(
     labelling_model.train()
     total = len(clip_train_loader)
     for clip_data_dict in tqdm.tqdm(
-        clip_train_loader, total=total, disable=disable_tqdm, desc="Training CLIP-field"
+        clip_train_loader,
+        total=total,
+        disable=disable_tqdm,
+        desc=f"Training epoch {epoch}",
     ):
-        optim.zero_grad()
-
-        # Now calculate loss from the labelling side
         xyzs = clip_data_dict["xyz"].to(device)
         clip_labels = clip_data_dict["clip_vector"].to(device)
         clip_image_labels = clip_data_dict["clip_image_vector"].to(device)
@@ -77,18 +77,15 @@ def train(
             device
         )
         label_weights = clip_data_dict["semantic_weight"].to(device)
-        (
-            predicted_label_latents,
-            predicted_image_latents,
-        ) = labelling_model(xyzs)
-
-        # Calculate the loss from the image to label side.
         image_label_index: torch.Tensor = (
             clip_data_dict["img_idx"].to(device).reshape(-1, 1)
         )
         language_label_index: torch.Tensor = (
             clip_data_dict["label"].to(device).reshape(-1, 1)
         )
+
+        (predicted_label_latents, predicted_image_latents) = labelling_model(xyzs)
+        # Calculate the loss from the image to label side.
         batch_size = len(image_label_index)
         image_label_mask: torch.Tensor = (
             image_label_index != image_label_index.t()
@@ -100,8 +97,6 @@ def train(
         # For logging purposes, keep track of negative samples per point.
         image_label_mask.requires_grad = False
         language_label_mask.requires_grad = False
-        # Use the predicted labels, the ground truth labels, and the masks to
-        # compute the contrastive loss.
         contrastive_loss_labels = labelling_model.compute_loss(
             predicted_label_latents,
             clip_labels,
@@ -143,13 +138,14 @@ def train(
                 )
                 if metric_calculators.get("semantic"):
                     for _, calculators in metric_calculators["semantic"].items():
-                        # Update the calculators.
                         _ = calculators(masked_class_prob, masked_labels)
 
         contrastive_loss = (
             image_to_label_loss_ratio * contrastive_loss_images
             + label_to_image_loss_ratio * contrastive_loss_labels
         )
+
+        optim.zero_grad(set_to_none=True)
         final_loss = contrastive_loss
         final_loss.backward()
         optim.step()
@@ -182,33 +178,29 @@ def train(
             except RuntimeError as e:
                 to_log[f"train_avg/{metric_name}"] = 0.0
             metric.reset()
-
     wandb.log(to_log)
-    logging.info(to_log)
+    logger.debug(to_log)
     return total_loss
 
 
 def save(
-    labelling_model,
-    optim,
+    labelling_model: Union[ImplicitDataparallel, GridCLIPModel],
+    optim: torch.optim.Optimizer,
     epoch: int,
-    save_directory=SAVE_DIRECTORY,
-    saving_dataparallel=False,
+    save_directory: str = SAVE_DIRECTORY,
+    saving_dataparallel: bool = False,
 ):
     if saving_dataparallel:
         to_save = labelling_model.module
     else:
         to_save = labelling_model
+    state_dict = {
+        "model": to_save.state_dict(),
+        "optim": optim.state_dict(),
+        "epoch": epoch,
+    }
     torch.save(
-        to_save,
-        f"{save_directory}/implicit_scene_label_model_{epoch}.pt",
-    )
-    torch.save(
-        optim.state_dict(),
-        f"{save_directory}/implicit_scene_label_model_optimizer_{epoch}.pt",
-    )
-    torch.save(
-        to_save,
+        state_dict,
         f"{save_directory}/implicit_scene_label_model_latest.pt",
     )
     return 0
@@ -245,12 +237,13 @@ def get_real_dataset(cfg):
 @hydra.main(version_base="1.2", config_path="configs", config_name="train.yaml")
 def main(cfg):
     seed_everything(cfg.seed)
+    # Set up single thread tokenizer.
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
     real_dataset: DeticDenseLabelledDataset = get_real_dataset(cfg)
     # Setup our model with min and max coordinates.
     max_coords, _ = real_dataset._label_xyz.max(dim=0)
     min_coords, _ = real_dataset._label_xyz.min(dim=0)
-    logging.info(f"Environment bounds: max {max_coords} min {min_coords}")
-
+    logger.debug(f"Environment bounds: max {max_coords} min {min_coords}")
     train_classifier = ClassificationExtractor(
         clip_model_name=cfg.web_models.clip,
         sentence_model_name=cfg.web_models.sentence,
@@ -260,11 +253,7 @@ def main(cfg):
 
     # Set up our metrics on this dataset.
     train_metric_calculators = {}
-
-    # Assume the classes go from 0 up to class labels.
-    train_class_count = {
-        "semantic": train_classifier.total_label_classes,
-    }
+    train_class_count = {"semantic": train_classifier.total_label_classes}
     average_style = ["micro", "macro", "weighted"]
     for classes, counts in train_class_count.items():
         train_metric_calculators[classes] = {}
@@ -278,6 +267,26 @@ def main(cfg):
                     f"{classes}_{metric_name}_{avg}"
                 ] = new_metric
 
+    epoch_size = int(cfg.epoch_size)
+
+    if torch.cuda.device_count() > 1 and cfg.dataparallel:
+        batch_multiplier = torch.cuda.device_count()
+    else:
+        batch_multiplier = 1
+    label_sampler = RandomSampler(
+        data_source=real_dataset, num_samples=epoch_size, replacement=True
+    )
+    clip_train_loader = DataLoader(
+        real_dataset,
+        batch_size=batch_multiplier * cfg.point_batch_size,
+        sampler=label_sampler,
+        pin_memory=True,
+        num_workers=cfg.num_workers,
+    )
+
+    logger.debug(f"Total train dataset sizes: {len(real_dataset)}")
+    logger.debug(f"Epochs for one pass over dataset: {len(real_dataset) // epoch_size}")
+
     labelling_model = GridCLIPModel(
         image_rep_size=real_dataset[0]["clip_image_vector"].shape[-1],
         text_rep_size=real_dataset[0]["clip_vector"].shape[-1],
@@ -289,93 +298,30 @@ def main(cfg):
         per_level_scale=cfg.per_level_scale,
         max_coords=max_coords,
         min_coords=min_coords,
+    ).to(cfg.device)
+    optim = torch.optim.Adam(
+        labelling_model.parameters(),
+        lr=cfg.lr,
+        betas=tuple(cfg.betas),
+        weight_decay=cfg.weight_decay,
     )
-    epoch_size = int(cfg.epoch_size)
 
-    if torch.cuda.device_count() > 1 and cfg.dataparallel:
-        batch_multiplier = torch.cuda.device_count()
+    save_directory = cfg.save_directory
+    state_dict = "{}/implicit_scene_label_model_latest.pt".format(save_directory)
+
+    if os.path.exists("{}/".format(save_directory)) and os.path.exists(state_dict):
+        logger.info(f"Resuming job from: {state_dict}")
+        loaded_dict = torch.load(state_dict)
+        labelling_model.load_state_dict(loaded_dict["model"])
+        optim.load_state_dict(loaded_dict["optim"])
+        epoch = loaded_dict["epoch"]
+        resume = "allow"
+        del loaded_dict
     else:
-        batch_multiplier = 1
-    label_sampler = RandomSampler(
-        data_source=real_dataset,
-        num_samples=epoch_size,
-        replacement=True,
-    )
-    clip_train_loader = DataLoader(
-        real_dataset,
-        batch_size=batch_multiplier * cfg.point_batch_size,
-        sampler=label_sampler,
-        pin_memory=True,
-        num_workers=cfg.num_workers,
-    )
-
-    logging.info(f"Total train dataset sizes: {len(real_dataset)}")
-    logging.info(f"Epochs for one pass over dataset: {len(real_dataset) // epoch_size}")
-
-    labelling_model = labelling_model.to(cfg.device)
-
-    run_id = wandb.util.generate_id()
-    save_directory = cfg.save_directory + f"/{run_id}"
-    loaded = False
-    if os.path.exists("{}/".format(save_directory)):
-        # First find out which epoch is the latest one.
-        all_files = glob.glob(
-            "{}/implicit_scene_label_model_*.pt".format(save_directory)
-        )
-        if len(all_files) > 0:
-            # Find out which is the latest checkpoint.
-            epoch = 0
-            model_path = "{}/implicit_scene_label_model_{}.pt".format(
-                save_directory, epoch
-            )
-            while os.path.exists(model_path):
-                epoch += SAVE_EVERY
-                model_path = "{}/implicit_scene_label_model_{}.pt".format(
-                    save_directory, epoch
-                )
-            epoch -= SAVE_EVERY
-            model_path = "{}/implicit_scene_label_model_{}.pt".format(
-                save_directory, epoch
-            )
-            optim_path = "{}/implicit_scene_label_model_optimizer_{}.pt".format(
-                save_directory, epoch
-            )
-            logging.info(f"Resuming job from: {model_path}")
-            # This has already started training, let's load the model
-            labelling_model = torch.load(
-                model_path,
-                map_location=cfg.device,
-            )
-            optim = torch.optim.Adam(
-                labelling_model.parameters(),
-                lr=cfg.lr,
-                betas=tuple(cfg.betas),
-                weight_decay=cfg.weight_decay,
-            )
-            if os.path.exists(optim_path):
-                optim.load_state_dict(torch.load(optim_path))
-            resume = "allow"
-            loaded = True
-            epoch += 1
-    if not loaded:
-        logging.info("Could not find old runs, starting fresh...")
-        os.makedirs(
-            "{}/".format(save_directory),
-            exist_ok=True,
-        )
-        epoch = 0
+        logger.info("Could not find old runs, starting fresh...")
+        os.makedirs("{}/".format(save_directory), exist_ok=True)
         resume = False
-        optim = torch.optim.Adam(
-            labelling_model.parameters(),
-            lr=cfg.lr,
-            betas=tuple(cfg.betas),
-            weight_decay=cfg.weight_decay,
-        )
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optim,
-            milestones=[50],
-            gamma=0.1,
-        )
+        epoch = 0
 
     dataparallel = False
     if torch.cuda.device_count() > 1 and cfg.dataparallel:
@@ -384,10 +330,7 @@ def main(cfg):
 
     wandb.init(
         project=cfg.project,
-        id=run_id,
-        tags=[
-            f"model/{cfg.model_type}",
-        ],
+        tags=[f"model/{cfg.model_type}"],
         config=OmegaConf.to_container(cfg, resolve=True),
         resume=resume,
     )
@@ -395,17 +338,13 @@ def main(cfg):
     wandb.config.web_labelled_points = len(real_dataset)
 
     # Disable tqdm if we are running inside slurm
-    job_id = os.environ.get("SLURM_JOB_ID")
-    if job_id is not None:
-        disable_tqdm = True
-    else:
-        disable_tqdm = False
-    test_accuracy = 0
+    disable_tqdm = os.environ.get("SLURM_JOB_ID") is not None
     while epoch <= cfg.epochs:
         train(
             clip_train_loader,
             labelling_model,
             optim,
+            epoch,
             train_classifier,
             cfg.device,
             exp_decay_coeff=cfg.exp_decay_coeff,
@@ -423,8 +362,6 @@ def main(cfg):
                 save_directory=save_directory,
                 saving_dataparallel=dataparallel,
             )
-        scheduler.step()
-    return test_accuracy
 
 
 if __name__ == "__main__":
