@@ -5,6 +5,9 @@ outputs
 wandb
 training.log
 core
+*.swp
+*.swo
+*.swn
 
 # Data files
 *.r3d
