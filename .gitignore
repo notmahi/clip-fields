@@ -12,6 +12,9 @@ core
 *.pt
 *.ply
 *.pcd
+*.jpg
+*.pt
+*.pth
 
 # Slurm files
 *.sbatch

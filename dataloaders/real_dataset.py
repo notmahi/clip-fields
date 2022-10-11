@@ -247,7 +247,7 @@ class DeticDenseLabelledDataset(Dataset):
                     )
                     out = v.draw_instance_predictions(instance.to("cpu"))
                     cv2.imwrite(
-                        self._visualization_path / f"{idx}.jpg",
+                        str(self._visualization_path / f"{idx}.jpg"),
                         out.get_image()[:, :, ::-1],
                         [int(cv2.IMWRITE_JPEG_QUALITY), 80],
                     )
@@ -488,7 +488,7 @@ class DeticDenseLabelledDataset(Dataset):
         new_metadata = MetadataCatalog.get("__unused")
         new_metadata.thing_classes = self._all_classes
         if self._use_scannet_colors:
-            new_metadata.thing_colors = SCANNET_NAME_TO_COLOR
+            new_metadata.thing_colors = SCANNET_ID_TO_COLOR
         self.metadata = new_metadata
         classifier = get_clip_embeddings(new_metadata.thing_classes)
         num_classes = len(new_metadata.thing_classes)
