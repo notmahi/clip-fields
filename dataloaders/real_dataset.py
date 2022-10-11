@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union
 import clip
 import einops
 import os
@@ -9,7 +9,7 @@ import cv2
 
 import numpy as np
 from pathlib import Path
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 from dataloaders.record3d import R3DSemanticDataset
 from dataloaders.scannet_200_classes import SCANNET_COLOR_MAP_200, CLASS_LABELS_200
 
@@ -118,7 +118,7 @@ class DeticDenseLabelledDataset(Dataset):
 
     def __init__(
         self,
-        view_dataset: R3DSemanticDataset,
+        view_dataset: Union[R3DSemanticDataset, Subset[R3DSemanticDataset]],
         clip_model_name: str = "ViT-B/32",
         sentence_encoding_model_name="all-mpnet-base-v2",
         device: str = "cuda",
@@ -138,9 +138,7 @@ class DeticDenseLabelledDataset(Dataset):
     ):
         dataset = view_dataset
         view_data = (
-            view_dataset.dataset
-            if isinstance(view_dataset, torch.utils.data.Subset)
-            else view_dataset
+            view_dataset.dataset if isinstance(view_dataset, Subset) else view_dataset
         )
         self._image_width, self._image_height = view_data.image_size
         clip_model, _ = clip.load(clip_model_name, device=device)

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torchmetrics
 import tqdm
 from omegaconf import OmegaConf
-from torch.utils.data import DataLoader, RandomSampler, Subset
+from torch.utils.data import DataLoader, Subset
 
 import wandb
 from dataloaders import (
@@ -47,7 +47,7 @@ def seed_everything(seed: int):
 
 def train(
     clip_train_loader: DataLoader,
-    labelling_model: GridCLIPModel,
+    labelling_model: Union[GridCLIPModel, ImplicitDataparallel],
     optim: torch.optim.Optimizer,
     epoch: int,
     classifier: ClassificationExtractor,
@@ -263,9 +263,9 @@ def main(cfg):
                     new_metric = metric_cls(
                         num_classes=counts, average=avg, multiclass=True
                     ).to(cfg.device)
-                train_metric_calculators[classes][
-                    f"{classes}_{metric_name}_{avg}"
-                ] = new_metric
+                    train_metric_calculators[classes][
+                        f"{classes}_{metric_name}_{avg}"
+                    ] = new_metric
 
     if torch.cuda.device_count() > 1 and cfg.dataparallel:
         batch_multiplier = torch.cuda.device_count()
