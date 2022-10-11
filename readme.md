@@ -4,6 +4,8 @@
 
 Authors: [Mahi Shafiullah](https://mahis.life), [Chris Paxton](https://cpaxton.github.io/), [Lerrel Pinto](https://lerrelpinto.com), [Soumith Chintala](https://soumith.ch), Arthur Szlam.
 
+https://user-images.githubusercontent.com/3000253/195213301-43eae6e8-4516-4b8d-98e7-633c607c6616.mp4
+
 **Tl;dr** CLIP-Field is a novel weakly supervised approach for learning a semantic robot memory that can respond to natural language queries solely from raw RGB-D and odometry data with no extra human labelling. It combines the image and language understanding capabilites of novel vision-language models (VLMs) like CLIP, large language models like sentence BERT, and open-label object detection models like Detic, and with spatial understanding capabilites of neural radiance field (NeRF) style architectures to build a spatial database that holds semantic information in it.
 
 ## Installation
