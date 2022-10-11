@@ -44,8 +44,8 @@ python train.py dataset_path=nyu.r3d use_lseg=true
 
 You can check out the `config/train.yaml` for a list of possible configuration options. In particular, if you want to train with any particular set of labels, you can specify them in the `custom_labels` field in `config/train.yaml`.
 
-## Evaluation
-
+## Interactive Tutorial and Evaluation
+We have an interactive tutorial and evaluation notebook that you can use to explore the model and evaluate it on your own data. You can find them in the `demo/` directory, that you can run after installing the dependencies.
 
 ## Acknowledgements
 We would like to thank the following projects for making their code and models available, which we relied upon heavily in this work.
