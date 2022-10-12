@@ -1,4 +1,5 @@
 # CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory
+### Teaching robots in the real world to respond to natural language queries with zero human labels — using pretrained large language models (LLMs), visual language models (VLMs), and neural fields.
 
 [[Paper]](https://arxiv.org/abs/2210.05663) [[Website]](https://mahis.life/clip-fields/) [[Code]](https://github.com/notmahi/clip-fields) [[Data]](https://osf.io/famgv) [[Video]](https://youtu.be/bKu7GvRiSQU)
 
@@ -30,8 +31,10 @@ cd gridencoder
 python setup.py install
 cd ..
 ```
+## Interactive Tutorial and Evaluation
+We have an interactive tutorial and evaluation notebook that you can use to explore the model and evaluate it on your own data. You can find them in the [`demo/`](https://github.com/notmahi/clip-fields/tree/main/demo) directory, that you can run after installing the dependencies.
 
-## Training
+## Training a CLIP-Field directly
 Once you have the dependencies installed, you can run the training script `train.py` with any [.r3d](https://record3d.app/) files that you have! If you just want to try out a sample, download the [sample data](https://osf.io/famgv) `nyu.r3d` and run the following command.
 
 ```
@@ -46,8 +49,6 @@ python train.py dataset_path=nyu.r3d use_lseg=true
 
 You can check out the `config/train.yaml` for a list of possible configuration options. In particular, if you want to train with any particular set of labels, you can specify them in the `custom_labels` field in `config/train.yaml`.
 
-## Interactive Tutorial and Evaluation
-We have an interactive tutorial and evaluation notebook that you can use to explore the model and evaluate it on your own data. You can find them in the `demo/` directory, that you can run after installing the dependencies.
 
 ## Acknowledgements
 We would like to thank the following projects for making their code and models available, which we relied upon heavily in this work.
