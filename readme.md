@@ -1,6 +1,6 @@
 # CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory
 
-[[Paper]](https://arxiv.org/abs/2210.05663) [[Website]](https://mahis.life/clip-fields/) [[Code]](https://github.com/notmahi/clip-fields) [[Data]](https://osf.io/famgv)
+[[Paper]](https://arxiv.org/abs/2210.05663) [[Website]](https://mahis.life/clip-fields/) [[Code]](https://github.com/notmahi/clip-fields) [[Data]](https://osf.io/famgv) [[Video]](https://youtu.be/bKu7GvRiSQU)
 
 Authors: [Mahi Shafiullah](https://mahis.life), [Chris Paxton](https://cpaxton.github.io/), [Lerrel Pinto](https://lerrelpinto.com), [Soumith Chintala](https://soumith.ch), Arthur Szlam.
 
