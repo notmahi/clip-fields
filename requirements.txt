@@ -11,7 +11,7 @@ git+https://github.com/facebookresearch/detectron2.git
 pandas==1.4.3
 pyntcloud==0.3.1
 hydra-submitit-launcher==1.2.0
-torch-encoding==1.2.2b20200804
+torch-encoding @ git+https://github.com/zhanghang1989/PyTorch-Encoding@c959dab8312b637fcc7edce83607acb4b0f82645
 torchmetrics==0.6.0
 sentence-transformers==2.2.2
 opencv-python==4.5.5.64
